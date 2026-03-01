@@ -1,0 +1,24 @@
+:root {
+  color-scheme: dark;
+}
+
+.terminal-grid-bg {
+  background-color: var(--bg-void);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.terminal-scroll-x {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.terminal-scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+.terminal-no-overflow-x {
+  overflow-x: hidden;
+}

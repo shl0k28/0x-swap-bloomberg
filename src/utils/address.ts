@@ -1,0 +1,10 @@
+/**
+ * Truncates an address for compact terminal display.
+ */
+export function shortAddress(address: string): string {
+  if (address.length < 12) {
+    return address;
+  }
+
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}

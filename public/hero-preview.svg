@@ -1,0 +1,40 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" fill="#091119"/>
+  <rect x="80" y="80" width="1120" height="560" rx="28" fill="#0F1722" stroke="#2A3B4E"/>
+  <circle cx="220" cy="170" r="8" fill="#00D4A9"/>
+  <circle cx="252" cy="170" r="8" fill="#FF8B5A"/>
+  <text x="110" y="178" fill="#D6E0EA" font-family="Manrope, sans-serif" font-size="24" font-weight="700">matcha-ai</text>
+  <rect x="110" y="215" width="1060" height="62" rx="14" fill="#0B1320" stroke="#314357"/>
+  <text x="130" y="253" fill="#97AABC" font-family="JetBrains Mono, monospace" font-size="24">swap 1 ETH for USDC on Base with 0.5% slippage</text>
+  <rect x="1008" y="228" width="138" height="38" rx="10" fill="#00B585"/>
+  <text x="1060" y="252" text-anchor="middle" fill="#081017" font-family="Manrope, sans-serif" font-size="20" font-weight="800">Run</text>
+
+  <rect x="110" y="304" width="520" height="294" rx="16" fill="#0B1320" stroke="#314357"/>
+  <text x="132" y="338" fill="#D6E0EA" font-family="Manrope, sans-serif" font-size="22" font-weight="700">Parsed Intent</text>
+  <text x="132" y="378" fill="#6FE9C8" font-family="JetBrains Mono, monospace" font-size="18">{</text>
+  <text x="152" y="410" fill="#6FE9C8" font-family="JetBrains Mono, monospace" font-size="18">&quot;chainId&quot;: 8453,</text>
+  <text x="152" y="442" fill="#6FE9C8" font-family="JetBrains Mono, monospace" font-size="18">&quot;sellToken&quot;: &quot;ETH&quot;,</text>
+  <text x="152" y="474" fill="#6FE9C8" font-family="JetBrains Mono, monospace" font-size="18">&quot;buyToken&quot;: &quot;USDC&quot;,</text>
+  <text x="152" y="506" fill="#6FE9C8" font-family="JetBrains Mono, monospace" font-size="18">&quot;amount&quot;: &quot;1&quot;</text>
+  <text x="132" y="538" fill="#6FE9C8" font-family="JetBrains Mono, monospace" font-size="18">}</text>
+
+  <rect x="650" y="304" width="520" height="294" rx="16" fill="#0B1320" stroke="#314357"/>
+  <text x="672" y="338" fill="#D6E0EA" font-family="Manrope, sans-serif" font-size="22" font-weight="700">0x Route Hops</text>
+
+  <rect x="672" y="365" width="476" height="54" rx="12" fill="#101B2A" stroke="#2C4158"/>
+  <text x="694" y="398" fill="#D6E0EA" font-family="JetBrains Mono, monospace" font-size="16">ETH</text>
+  <text x="758" y="398" fill="#6D7D8F" font-family="JetBrains Mono, monospace" font-size="16">→</text>
+  <text x="786" y="398" fill="#D6E0EA" font-family="JetBrains Mono, monospace" font-size="16">USDC</text>
+  <rect x="1030" y="377" width="96" height="30" rx="8" fill="#123428"/>
+  <text x="1078" y="397" text-anchor="middle" fill="#74F1CE" font-family="Manrope, sans-serif" font-size="14" font-weight="700">Uniswap_V3</text>
+
+  <rect x="672" y="430" width="476" height="54" rx="12" fill="#101B2A" stroke="#2C4158"/>
+  <text x="694" y="463" fill="#D6E0EA" font-family="JetBrains Mono, monospace" font-size="16">USDC</text>
+  <text x="774" y="463" fill="#6D7D8F" font-family="JetBrains Mono, monospace" font-size="16">→</text>
+  <text x="802" y="463" fill="#D6E0EA" font-family="JetBrains Mono, monospace" font-size="16">USDC</text>
+  <rect x="1030" y="442" width="96" height="30" rx="8" fill="#3D2A1F"/>
+  <text x="1078" y="462" text-anchor="middle" fill="#FFB18F" font-family="Manrope, sans-serif" font-size="14" font-weight="700">RFQ</text>
+
+  <rect x="672" y="517" width="220" height="56" rx="12" fill="#00B585"/>
+  <text x="782" y="552" text-anchor="middle" fill="#081017" font-family="Manrope, sans-serif" font-size="20" font-weight="800">Execute Swap</text>
+</svg>
