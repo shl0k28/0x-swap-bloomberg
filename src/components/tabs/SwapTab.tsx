@@ -10,7 +10,6 @@ import {
 } from '@chakra-ui/react';
 import { ArrowUpDownIcon } from '@chakra-ui/icons';
 import { motion } from 'framer-motion';
-import { formatUnits } from 'viem';
 import { buttonStateVariants, springConfig } from '@/animations';
 import { BrailleSpinner } from '@/components/common/BrailleSpinner';
 import { SlippageSelector } from '@/components/common/SlippageSelector';
@@ -18,6 +17,7 @@ import { TokenSelector } from '@/components/common/TokenSelector';
 import { TerminalErrorLine } from '@/components/common/TerminalErrorLine';
 import { PriceImpactBanner } from '@/components/tabs/PriceImpactBanner';
 import { useSwapTabController } from '@/hooks/useSwapTabController';
+import { usePriceStore } from '@/store/priceStore';
 import { sanitizeDecimalInput } from '@/utils/number';
 
 const MotionButton = motion(Button);
@@ -42,30 +42,31 @@ export function SwapTab() {
     stateLabel,
   } = useSwapTabController();
 
+  const ethPrice = usePriceStore((state) => state.prices.ETH?.price ?? 0);
+  const parsedAmount = Number.parseFloat(draft.amount);
   const usdHint =
-    quote && quote.resolvedBuyToken.decimals > 0
-      ? `$${Number(
-          formatUnits(BigInt(quote.response.buyAmount), quote.resolvedBuyToken.decimals),
-        ).toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}`
+    Number.isFinite(parsedAmount) && parsedAmount > 0 && ethPrice > 0
+      ? (parsedAmount * ethPrice).toLocaleString('en-US', {
+          style: 'currency',
+          currency: 'USD',
+        })
       : '$--';
 
   return (
-    <Flex direction="column" p={3} gap={3} h="100%" overflowY="auto">
-      <HStack spacing={2} align="center">
+    <Flex direction="column" p={3} gap={3} h="100%" overflowY="auto" alignItems="flex-start">
+      <HStack spacing={2} align="center" w="full" maxW="480px">
         <TokenSelector
           chainId={chainId}
           value={draft.sellToken}
           onChange={(sellToken) => updateDraft({ sellToken })}
           walletAddress={address}
+          triggerButtonProps={{ flex: 1, maxW: '220px' }}
         />
 
         <Button
-          h="24px"
-          w="24px"
-          minW="24px"
+          h="32px"
+          w="32px"
+          minW="32px"
           bg="bgRaised"
           border="1px solid"
           borderColor="borderBright"
@@ -83,10 +84,11 @@ export function SwapTab() {
           value={draft.buyToken}
           onChange={(buyToken) => updateDraft({ buyToken })}
           walletAddress={address}
+          triggerButtonProps={{ flex: 1, maxW: '220px' }}
         />
       </HStack>
 
-      <Box>
+      <Box w="full" maxW="480px">
         <InputGroup size="lg">
           <Input
             h="44px"
@@ -124,9 +126,11 @@ export function SwapTab() {
         </Text>
       </Box>
 
-      <SlippageSelector value={draft.slippagePct} onChange={(slippagePct) => updateDraft({ slippagePct })} />
+      <Box w="full" maxW="480px">
+        <SlippageSelector value={draft.slippagePct} onChange={(slippagePct) => updateDraft({ slippagePct })} />
+      </Box>
 
-      <HStack spacing={2}>
+      <HStack spacing={2} w="full" maxW="480px">
         <Text fontSize="10px" color="textSecondary" fontFamily="mono">
           Deadline (minutes)
         </Text>
@@ -159,6 +163,8 @@ export function SwapTab() {
 
       <MotionButton
         h="44px"
+        w="full"
+        maxW="480px"
         bg={executionState === 'SUCCESS' ? 'green' : executionState === 'ERROR' ? 'red' : 'amber'}
         color={executionState === 'SUCCESS' || executionState === 'ERROR' ? 'bgVoid' : 'bgVoid'}
         fontFamily="mono"

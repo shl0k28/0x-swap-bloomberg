@@ -7,6 +7,7 @@ import { TerminalErrorLine } from '@/components/common/TerminalErrorLine';
 import { TokenSelector } from '@/components/common/TokenSelector';
 import { GaslessFeeBreakdown } from '@/components/tabs/GaslessFeeBreakdown';
 import { useGaslessTabController } from '@/hooks/useGaslessTabController';
+import { usePriceStore } from '@/store/priceStore';
 
 const MotionButton = motion(Button);
 
@@ -29,25 +30,36 @@ export function GaslessTab() {
     execute,
     executionStateLabel,
   } = useGaslessTabController();
+  const ethPrice = usePriceStore((state) => state.prices.ETH?.price ?? 0);
+  const parsedAmount = Number.parseFloat(draft.amount);
+  const usdHint =
+    Number.isFinite(parsedAmount) && parsedAmount > 0 && ethPrice > 0
+      ? (parsedAmount * ethPrice).toLocaleString('en-US', {
+          style: 'currency',
+          currency: 'USD',
+        })
+      : '$--';
 
   return (
-    <Flex direction="column" p={3} gap={3} h="100%" overflowY="auto">
+    <Flex direction="column" p={3} gap={3} h="100%" overflowY="auto" alignItems="flex-start">
       <Text fontSize="12px" color="textSecondary" fontFamily="body">
         Trades executed without ETH for gas. Fees are deducted from the sell token.
       </Text>
 
-      <HStack spacing={2} align="center">
+      <HStack spacing={2} align="center" w="full" maxW="480px">
         <TokenSelector
           chainId={chainId}
           value={draft.sellToken}
           onChange={(sellToken) => updateDraft({ sellToken })}
           walletAddress={address}
+          triggerButtonProps={{ flex: 1, maxW: '220px' }}
         />
         <TokenSelector
           chainId={chainId}
           value={draft.buyToken}
           onChange={(buyToken) => updateDraft({ buyToken })}
           walletAddress={address}
+          triggerButtonProps={{ flex: 1, maxW: '220px' }}
         />
         <EligibilityBadge eligible={eligible} />
       </HStack>
@@ -56,22 +68,32 @@ export function GaslessTab() {
         {eligibilityMessage}
       </Text>
 
-      <Input
-        h="44px"
-        value={draft.amount}
-        onChange={(event) => updateDraft({ amount: event.target.value })}
-        bg="bgSurface"
-        border="1px solid"
-        borderColor="borderBright"
-        borderRadius="2px"
-        fontFamily="mono"
-        fontSize="16px"
-      />
+      <Box w="full" maxW="480px">
+        <Input
+          h="44px"
+          value={draft.amount}
+          onChange={(event) => updateDraft({ amount: event.target.value })}
+          bg="bgSurface"
+          border="1px solid"
+          borderColor="borderBright"
+          borderRadius="2px"
+          fontFamily="mono"
+          fontSize="16px"
+          _focus={{ borderColor: 'amber', boxShadow: 'none' }}
+        />
+        <Text ml={1} mt={1} fontFamily="mono" fontSize="10px" color="textDim">
+          {usdHint}
+        </Text>
+      </Box>
 
-      <SlippageSelector value={draft.slippagePct} onChange={(slippagePct) => updateDraft({ slippagePct })} />
+      <Box w="full" maxW="480px">
+        <SlippageSelector value={draft.slippagePct} onChange={(slippagePct) => updateDraft({ slippagePct })} />
+      </Box>
 
       <Button
         h="36px"
+        w="full"
+        maxW="480px"
         variant="outline"
         borderColor="borderBright"
         color="textSecondary"
@@ -89,6 +111,8 @@ export function GaslessTab() {
 
       <MotionButton
         h="44px"
+        w="full"
+        maxW="480px"
         bg={executionState === 'SUCCESS' ? 'green' : executionState === 'ERROR' ? 'red' : 'amber'}
         color="bgVoid"
         isDisabled={!quote || !eligible}

@@ -9,9 +9,10 @@ import { toTimeAgo } from '@/utils/time';
 export function BottomPanel() {
   const snapshot = useAppStore((state) => state.quoteSnapshot);
   const outputLogs = useAppStore((state) => state.outputLogs);
+  const routeHeight = snapshot && snapshot.route.fills.length > 4 ? 150 : 120;
 
   return (
-    <Flex h="100%" direction="column" bg="bgBase">
+    <Flex h={`${routeHeight + 68}px`} direction="column" bg="bgBase">
       <Box px={3} py={1.5} borderBottom="1px solid" borderColor="border">
         <Text
           fontFamily="mono"
@@ -24,13 +25,12 @@ export function BottomPanel() {
         </Text>
       </Box>
 
-      <Box h="80px">
+      <Box h={`${routeHeight}px`}>
         <RouteVisualizer snapshot={snapshot} />
       </Box>
 
       <Box
-        flex="1"
-        minH={0}
+        h="40px"
         borderTop="1px solid"
         borderColor="border"
         px={3}

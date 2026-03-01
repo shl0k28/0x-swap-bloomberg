@@ -68,6 +68,7 @@ export const terminalTheme = extendTheme({
       baseStyle: {
         borderRadius: '2px',
         boxShadow: 'none',
+        maxW: '480px',
         _focusVisible: {
           boxShadow: 'none',
         },
@@ -78,6 +79,15 @@ export const terminalTheme = extendTheme({
         field: {
           fontFamily: 'mono',
           fontFeatureSettings: '"ss08" 1',
+          maxW: '480px',
+          _focus: {
+            borderColor: 'amber',
+            boxShadow: 'none',
+          },
+          _focusVisible: {
+            borderColor: 'amber',
+            boxShadow: 'none',
+          },
         },
       },
       defaultProps: {
@@ -91,6 +101,11 @@ export const terminalTheme = extendTheme({
       },
       defaultProps: {
         focusBorderColor: 'borderBright',
+      },
+    },
+    Divider: {
+      baseStyle: {
+        borderColor: 'border',
       },
     },
   },
@@ -115,9 +130,12 @@ export const terminalTheme = extendTheme({
       },
       'html, body, #root': {
         height: '100%',
+        minHeight: '100vh',
+        margin: 0,
+        padding: 0,
+        overflow: 'hidden',
       },
       body: {
-        margin: 0,
         background: 'bgVoid',
         color: 'textPrimary',
         backgroundImage:
@@ -126,6 +144,14 @@ export const terminalTheme = extendTheme({
       },
       '*': {
         borderColor: 'border',
+        scrollbarWidth: 'none',
+      },
+      '*:focus, *:focus-visible': {
+        outline: 'none !important',
+        boxShadow: 'none !important',
+      },
+      '::-webkit-scrollbar': {
+        display: 'none',
       },
     },
   },

@@ -1,43 +1,54 @@
 import { Flex, Text, useToken } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
-import { AnimatedNumber } from '@/components/common/AnimatedNumber';
-import { BrailleSpinner } from '@/components/common/BrailleSpinner';
+import { useMemo } from 'react';
 import { LeftPanelSection } from '@/components/left/LeftPanelSection';
-import { useTickerRows } from '@/hooks/useTickerRows';
-import { toSignedPercent } from '@/utils/number';
+import { type PythSymbol } from '@/constants/pythFeeds';
+import { usePriceStore } from '@/store/priceStore';
 
 const MotionText = motion(Text);
+const symbols: PythSymbol[] = ['ETH', 'BTC', 'SOL', 'USDT'];
 
 /**
- * Live market ticker shown at top of left panel.
+ * Live market ticker using Pyth websocket price feed.
  */
 export function PriceTickerPanel() {
-  const { rows, loading } = useTickerRows();
-  const [amberColor, textDimColor, textPrimaryColor] = useToken('colors', [
+  const prices = usePriceStore((state) => state.prices);
+  const connectionStatus = usePriceStore((state) => state.connectionStatus);
+  const [amberColor, textPrimaryColor, textDimColor] = useToken('colors', [
     'amber',
-    'textDim',
     'textPrimary',
+    'textDim',
   ]);
+
+  const rows = useMemo(
+    () =>
+      symbols.map((symbol) => ({
+        symbol,
+        entry: prices[symbol],
+      })),
+    [prices],
+  );
 
   return (
     <LeftPanelSection title="PRICE TICKER">
-      {loading ? <BrailleSpinner label="loading markets" /> : null}
-
       <Flex direction="column">
-        {rows.map((row, index) => (
-          <TickerRow
-            key={`${row.symbol}-${row.quoteSymbol}`}
-            symbol={row.symbol}
-            price={row.price}
-            changePct={row.changePct}
-            isStale={row.isStale}
-            hasDivider={index < rows.length - 1}
-            amberColor={amberColor}
-            textDimColor={textDimColor}
-            textPrimaryColor={textPrimaryColor}
-          />
-        ))}
+        {rows.map((row, index) => {
+          const isLast = index === rows.length - 1;
+          return (
+            <TickerRow
+              key={row.symbol}
+              symbol={row.symbol}
+              connectionStatus={connectionStatus}
+              price={row.entry?.price}
+              delta={row.entry?.delta}
+              flash={row.entry?.flash ?? false}
+              hasDivider={!isLast}
+              amberColor={amberColor}
+              textPrimaryColor={textPrimaryColor}
+              textDimColor={textDimColor}
+            />
+          );
+        })}
       </Flex>
     </LeftPanelSection>
   );
@@ -45,38 +56,30 @@ export function PriceTickerPanel() {
 
 function TickerRow({
   symbol,
+  connectionStatus,
   price,
-  changePct,
-  isStale,
+  delta,
+  flash,
   hasDivider,
   amberColor,
-  textDimColor,
   textPrimaryColor,
+  textDimColor,
 }: {
-  symbol: string;
-  price: number;
-  changePct: number;
-  isStale?: boolean;
+  symbol: PythSymbol;
+  connectionStatus: 'idle' | 'connecting' | 'online' | 'error';
+  price?: number;
+  delta?: number;
+  flash: boolean;
   hasDivider: boolean;
   amberColor: string;
-  textDimColor: string;
   textPrimaryColor: string;
+  textDimColor: string;
 }) {
-  const previousRef = useRef<number | null>(null);
-  const [flashUpdate, setFlashUpdate] = useState(false);
-
-  useEffect(() => {
-    if (previousRef.current !== null && previousRef.current !== price) {
-      setFlashUpdate(true);
-      const timer = window.setTimeout(() => setFlashUpdate(false), 600);
-      previousRef.current = price;
-      return () => window.clearTimeout(timer);
-    }
-    previousRef.current = price;
-    return undefined;
-  }, [price]);
-
-  const deltaColor = changePct > 0 ? 'green' : changePct < 0 ? 'red' : 'textDim';
+  const hasPrice = typeof price === 'number' && Number.isFinite(price);
+  const hasDelta = typeof delta === 'number' && Number.isFinite(delta);
+  const isFeedError = connectionStatus === 'error' && !hasPrice;
+  const isLoading = (connectionStatus === 'connecting' || connectionStatus === 'idle') && !hasPrice;
+  const deltaColor = hasDelta ? (delta > 0 ? 'green' : delta < 0 ? 'red' : 'textDim') : 'textDim';
 
   return (
     <Flex
@@ -86,6 +89,7 @@ function TickerRow({
       borderColor="border"
       fontFamily="mono"
       fontSize="10px"
+      gap={1}
     >
       <Text w="36px" color="amber">
         {symbol}
@@ -94,18 +98,33 @@ function TickerRow({
       <MotionText
         flex="1"
         textAlign="right"
-        color={isStale ? 'textDim' : 'textPrimary'}
-        animate={{
-          color: flashUpdate ? amberColor : isStale ? textDimColor : textPrimaryColor,
-        }}
+        color={hasPrice ? 'textPrimary' : 'textDim'}
+        animate={{ color: flash ? amberColor : hasPrice ? textPrimaryColor : textDimColor }}
         transition={{ duration: 0.6 }}
       >
-        {price > 0 ? <AnimatedNumber value={price} fractionDigits={4} /> : '--'}
+        {isFeedError
+          ? 'FEED ERR'
+          : hasPrice
+            ? formatPrice(price)
+            : isLoading
+              ? '--'
+              : '--'}
       </MotionText>
 
-      <Text w="54px" textAlign="right" color={isStale ? 'textDim' : deltaColor}>
-        {isStale ? '--' : toSignedPercent(changePct)}
+      <Text w="64px" textAlign="right" color={isFeedError ? 'red' : deltaColor}>
+        {isFeedError
+          ? '--'
+          : hasDelta
+            ? `${delta >= 0 ? '+' : ''}${delta.toFixed(2)}%`
+            : '--'}
       </Text>
     </Flex>
   );
+}
+
+function formatPrice(value: number): string {
+  return value.toLocaleString('en-US', {
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
+  });
 }

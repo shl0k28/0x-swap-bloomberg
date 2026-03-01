@@ -20,9 +20,11 @@ export function TerminalShell() {
   return (
     <Grid
       h="100%"
+      w="100%"
       className="terminal-grid-bg terminal-no-overflow-x"
       templateColumns={{ base: '1fr', md: '200px 1fr', lg: '260px 1fr' }}
       templateRows="44px 1fr 24px"
+      overflow="hidden"
     >
       <GridItem colSpan={{ base: 1, md: 2 }} rowStart={1}>
         <TerminalTopbar />
@@ -34,17 +36,17 @@ export function TerminalShell() {
         borderRight={{ base: 'none', md: '1px solid' }}
         borderColor="border"
         display={{ base: 'none', md: 'block' }}
-        overflowY="auto"
+        overflow="hidden"
       >
         <LeftSidebar />
       </GridItem>
 
-      <GridItem rowStart={2} colStart={{ base: 1, md: 2 }} minW={0}>
-        <Grid h="100%" templateRows="1fr auto">
+      <GridItem rowStart={2} colStart={{ base: 1, md: 2 }} minW={0} overflow="hidden">
+        <Grid h="100%" templateRows="1fr auto" overflow="hidden">
           <Box minH={0} overflowY="auto" pb={{ base: '52px', md: 0 }}>
             <MainPanel />
           </Box>
-          <Box h="180px" borderTop="1px solid" borderColor="border">
+          <Box borderTop="1px solid" borderColor="border" flexShrink={0}>
             <BottomPanel />
           </Box>
         </Grid>

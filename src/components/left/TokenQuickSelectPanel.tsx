@@ -1,5 +1,5 @@
 import { Button, Flex, HStack, Text } from '@chakra-ui/react';
-import { TokenAvatar } from '@/components/common/TokenAvatar';
+import { TokenLogo } from '@/components/TokenLogo';
 import { LeftPanelSection } from '@/components/left/LeftPanelSection';
 import { PINNED_SYMBOLS, getTokensForChain } from '@/constants/tokens';
 import { useAppStore } from '@/stores/appStore';
@@ -17,6 +17,7 @@ export function TokenQuickSelectPanel() {
       <Flex wrap="wrap" gap={1.5}>
         {PINNED_SYMBOLS.map((symbol) => {
           const token = tokens.find((entry) => entry.symbol === symbol);
+          const logoAddress = token?.address ?? symbol;
           return (
             <Button
               key={symbol}
@@ -34,7 +35,7 @@ export function TokenQuickSelectPanel() {
               onClick={() => applyQuickToken(symbol)}
             >
               <HStack spacing={1}>
-                <TokenAvatar symbol={symbol} logoUri={token?.logoUri} size="xs" />
+                <TokenLogo address={logoAddress} chainId={chainId} symbol={symbol} size={16} />
                 <Text>{symbol}</Text>
               </HStack>
             </Button>

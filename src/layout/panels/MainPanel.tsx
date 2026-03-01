@@ -17,7 +17,7 @@ export function MainPanel() {
   const activeTab = useAppStore((state) => state.activeTab);
 
   return (
-    <Box h="100%" display="flex" flexDirection="column" minW={0}>
+    <Box h="100%" display="flex" flexDirection="column" minW={0} overflow="hidden">
       <ModeTabs />
       <Box flex="1" minH={0} overflowY="auto">
         <AnimatePresence mode="wait">

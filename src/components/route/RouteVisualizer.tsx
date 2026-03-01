@@ -1,44 +1,46 @@
-import { Box, Flex, Text, useToken } from '@chakra-ui/react';
-import { motion } from 'framer-motion';
+import { Box, Flex, Text } from '@chakra-ui/react';
+import { AnimatePresence, motion } from 'framer-motion';
 import type { QuoteSnapshot } from '@/stores/appStore';
 
-interface Node {
+interface RouteNode {
   id: string;
   label: string;
   x: number;
   y: number;
   width: number;
   height: number;
-  type: 'token' | 'pool';
-  subtitle?: string;
+  kind: 'token' | 'pool';
 }
 
-interface Edge {
+interface RouteEdge {
   id: string;
-  from: Node;
-  to: Node;
+  from: RouteNode;
+  to: RouteNode;
   label: string;
 }
 
-interface GraphModel {
-  nodes: Node[];
-  edges: Edge[];
+interface RouteLayout {
+  viewWidth: number;
+  viewHeight: number;
+  nodeFontSize: number;
+  nodes: RouteNode[];
+  edges: RouteEdge[];
 }
 
-const MotionLine = motion.line;
+const MotionSvg = motion.svg;
+const MotionPath = motion.path;
 
 /**
- * Compact SVG route visualizer rendered in the bottom panel.
+ * SVG route visualizer with responsive path layout and dense-route compaction.
  */
 export function RouteVisualizer({ snapshot }: { snapshot: QuoteSnapshot | null }) {
-  const [cyan, textDim, bgSurface, bgRaised, amber, borderBright, textPrimary] = useToken(
-    'colors',
-    ['cyan', 'textDim', 'bgSurface', 'bgRaised', 'amber', 'borderBright', 'textPrimary'],
-  );
+  const poolCount = snapshot?.route.fills.length ?? 0;
+  const denseLayout = poolCount > 4;
+  const containerHeight = denseLayout ? 150 : 120;
 
-  if (!snapshot || snapshot.route.fills.length === 0) {
+  if (!snapshot || poolCount === 0) {
     return (
-      <Flex h="80px" align="center" justify="center" bg="bgSurface">
+      <Flex h={`${containerHeight}px`} align="center" justify="center" bg="bgSurface" borderTop="1px solid" borderColor="border">
         <Text fontFamily="mono" fontSize="10px" color="textDim">
           NO ROUTE LOADED
         </Text>
@@ -46,67 +48,72 @@ export function RouteVisualizer({ snapshot }: { snapshot: QuoteSnapshot | null }
     );
   }
 
-  const graph = buildGraph(snapshot);
+  const layout = buildLayout(snapshot, containerHeight);
 
   return (
-    <Box h="80px" w="100%" overflowX="auto" bg="bgSurface">
-      <svg width="700" height="80" role="img" aria-label="0x route">
-        {graph.edges.map((edge, index) => (
-          <RouteEdgeSvg key={edge.id} edge={edge} index={index} color={cyan} labelColor={textDim} />
-        ))}
-
-        {graph.nodes.map((node) => (
-          <RouteNodeSvg
-            key={node.id}
-            node={node}
-            tokenFill={bgSurface}
-            poolFill={bgRaised}
-            tokenStroke={amber}
-            poolStroke={borderBright}
-            textColor={textPrimary}
-            subtitleColor={cyan}
-          />
-        ))}
-      </svg>
+    <Box
+      w="100%"
+      h={`${containerHeight}px`}
+      overflow="hidden"
+      bg="bgSurface"
+      borderTop="1px solid"
+      borderColor="border"
+      pos="relative"
+    >
+      <AnimatePresence mode="wait">
+        <MotionSvg
+          key={snapshot.id}
+          width="100%"
+          height="100%"
+          viewBox={`0 0 ${layout.viewWidth} ${layout.viewHeight}`}
+          preserveAspectRatio="xMidYMid meet"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+        >
+          {layout.edges.map((edge, index) => (
+            <RouteEdgePath key={edge.id} edge={edge} index={index} fontSize={layout.nodeFontSize} />
+          ))}
+          {layout.nodes.map((node) => (
+            <RouteNodeBox key={node.id} node={node} fontSize={layout.nodeFontSize} />
+          ))}
+        </MotionSvg>
+      </AnimatePresence>
     </Box>
   );
 }
 
-function RouteEdgeSvg({
-  edge,
-  index,
-  color,
-  labelColor,
-}: {
-  edge: Edge;
-  index: number;
-  color: string;
-  labelColor: string;
-}) {
+function RouteEdgePath({ edge, index, fontSize }: { edge: RouteEdge; index: number; fontSize: number }) {
   const x1 = edge.from.x + edge.from.width / 2;
   const y1 = edge.from.y;
   const x2 = edge.to.x - edge.to.width / 2;
   const y2 = edge.to.y;
+  const c1x = x1 + (x2 - x1) * 0.45;
+  const c2x = x1 + (x2 - x1) * 0.55;
+  const path = `M ${x1} ${y1} C ${c1x} ${y1}, ${c2x} ${y2}, ${x2} ${y2}`;
   const length = Math.max(Math.hypot(x2 - x1, y2 - y1), 1);
+  const midpoint = cubicBezierPoint(0.5, { x: x1, y: y1 }, { x: c1x, y: y1 }, { x: c2x, y: y2 }, { x: x2, y: y2 });
+
   return (
     <g>
-      <MotionLine
-        x1={x1}
-        y1={y1}
-        x2={x2}
-        y2={y2}
-        stroke={color}
-        strokeWidth="1"
-        initial={{ pathLength: 0, opacity: 0.7, strokeDasharray: length, strokeDashoffset: length }}
-        animate={{ pathLength: 1, opacity: 1, strokeDashoffset: 0 }}
-        transition={{ duration: 0.6, delay: index * 0.08, ease: 'easeOut' }}
+      <MotionPath
+        d={path}
+        fill="none"
+        stroke="var(--chakra-colors-cyan)"
+        strokeWidth="0.8"
+        opacity="0.7"
+        strokeDasharray={length}
+        initial={{ strokeDashoffset: length }}
+        animate={{ strokeDashoffset: 0 }}
+        transition={{ duration: 0.5, delay: index * 0.08, ease: 'easeOut' }}
       />
       <text
-        x={(x1 + x2) / 2}
-        y={(y1 + y2) / 2 - 6}
-        fill={labelColor}
+        x={midpoint.x}
+        y={midpoint.y - 6}
+        fill="var(--chakra-colors-textDim)"
         fontFamily="Iosevka Fixed, Iosevka, monospace"
-        fontSize="9"
+        fontSize={fontSize}
         textAnchor="middle"
       >
         {edge.label}
@@ -115,117 +122,170 @@ function RouteEdgeSvg({
   );
 }
 
-function RouteNodeSvg({
-  node,
-  tokenFill,
-  poolFill,
-  tokenStroke,
-  poolStroke,
-  textColor,
-  subtitleColor,
-}: {
-  node: Node;
-  tokenFill: string;
-  poolFill: string;
-  tokenStroke: string;
-  poolStroke: string;
-  textColor: string;
-  subtitleColor: string;
-}) {
-  const isToken = node.type === 'token';
+function RouteNodeBox({ node, fontSize }: { node: RouteNode; fontSize: number }) {
+  const x = node.x - node.width / 2;
+  const y = node.y - node.height / 2;
+  const isTerminal = node.kind === 'token' && (node.id === 'source' || node.id === 'destination');
+  const maxChars = Math.max(4, Math.floor((node.width - 8) / (fontSize * 0.58)));
+  const label = truncate(node.label, maxChars);
+
   return (
     <g>
       <rect
-        x={node.x - node.width / 2}
-        y={node.y - node.height / 2}
+        x={x}
+        y={y}
         width={node.width}
         height={node.height}
         rx={2}
-        fill={isToken ? tokenFill : poolFill}
-        stroke={isToken ? tokenStroke : poolStroke}
+        fill="var(--chakra-colors-bgRaised)"
+        stroke={isTerminal ? 'var(--chakra-colors-amber)' : 'var(--chakra-colors-borderBright)'}
         strokeWidth="1"
       />
       <text
         x={node.x}
         y={node.y + 3}
-        fill={textColor}
+        fill="var(--chakra-colors-textPrimary)"
         fontFamily="Iosevka Fixed, Iosevka, monospace"
-        fontSize="10"
+        fontSize={fontSize}
         textAnchor="middle"
       >
-        {node.label}
+        {label}
       </text>
-      {node.subtitle ? (
-        <text
-          x={node.x}
-          y={node.y + 15}
-          fill={subtitleColor}
-          fontFamily="Iosevka Fixed, Iosevka, monospace"
-          fontSize="8"
-          textAnchor="middle"
-        >
-          {node.subtitle}
-        </text>
-      ) : null}
     </g>
   );
 }
 
-function buildGraph(snapshot: QuoteSnapshot): GraphModel {
-  const tokenLookup = new Map<string, string>();
+function buildLayout(snapshot: QuoteSnapshot, containerHeight: number): RouteLayout {
+  const viewWidth = 600;
+  const viewHeight = containerHeight;
+  const denseLayout = snapshot.route.fills.length > 4;
+  const nodeHeight = denseLayout ? 18 : 22;
+  const nodeFontSize = denseLayout ? 7 : 8;
+  const sourceY = viewHeight / 2;
+
+  const tokenByAddress = new Map<string, string>();
   for (const token of snapshot.route.tokens) {
     if (token.symbol) {
-      tokenLookup.set(token.address.toLowerCase(), token.symbol);
+      tokenByAddress.set(token.address.toLowerCase(), token.symbol);
     }
   }
 
-  const source = createNode('token-source', snapshot.sellSymbol, 64, 40, 'token', 54, 24);
-  const destination = createNode('token-destination', snapshot.buySymbol, 610, 40, 'token', 54, 24);
-  const routeCount = Math.max(snapshot.route.fills.length, 1);
-
-  const pools = snapshot.route.fills.map((fill, index) => {
-    const y = 40 + (routeCount === 1 ? 0 : (index - (routeCount - 1) / 2) * 20);
-    return createNode(`pool-${index}`, fill.source, 270, y, 'pool', 72, 20, tokenLookup.get(fill.to.toLowerCase()));
+  const intermediateSymbols = snapshot.route.fills.map((fill) => {
+    const symbol = tokenByAddress.get(fill.to.toLowerCase());
+    return symbol && symbol !== snapshot.buySymbol ? symbol : null;
   });
 
-  const mids = snapshot.route.fills.reduce<Record<number, Node>>((acc, fill, index) => {
-    const symbol = tokenLookup.get(fill.to.toLowerCase());
-    if (symbol && symbol !== snapshot.buySymbol) {
-      const y = 40 + (routeCount === 1 ? 0 : (index - (routeCount - 1) / 2) * 20);
-      acc[index] = createNode(`mid-${index}`, symbol, 460, y, 'token', 54, 24);
+  const hasIntermediateTokens = intermediateSymbols.some((symbol) => symbol !== null);
+  const sourceX = viewWidth * 0.08;
+  const poolX = hasIntermediateTokens ? viewWidth * 0.36 : viewWidth * 0.5;
+  const tokenX = viewWidth * 0.64;
+  const destinationX = viewWidth * 0.9;
+  const rowSpacing = viewHeight / (snapshot.route.fills.length + 1);
+
+  const source: RouteNode = {
+    id: 'source',
+    label: snapshot.sellSymbol,
+    x: sourceX,
+    y: sourceY,
+    width: 48,
+    height: nodeHeight,
+    kind: 'token',
+  };
+  const destination: RouteNode = {
+    id: 'destination',
+    label: snapshot.buySymbol,
+    x: destinationX,
+    y: sourceY,
+    width: 48,
+    height: nodeHeight,
+    kind: 'token',
+  };
+
+  const nodes: RouteNode[] = [source, destination];
+  const edges: RouteEdge[] = [];
+
+  snapshot.route.fills.forEach((fill, index) => {
+    const y = rowSpacing * (index + 1);
+    const poolNode: RouteNode = {
+      id: `pool-${index}`,
+      label: fill.source,
+      x: poolX,
+      y,
+      width: 80,
+      height: nodeHeight,
+      kind: 'pool',
+    };
+    nodes.push(poolNode);
+
+    const edgePct = `${(Number(fill.proportionBps) / 100).toFixed(2)}%`;
+    edges.push({
+      id: `source-to-pool-${index}`,
+      from: source,
+      to: poolNode,
+      label: edgePct,
+    });
+
+    const intermediateSymbol = intermediateSymbols[index];
+    if (intermediateSymbol) {
+      const tokenNode: RouteNode = {
+        id: `token-${index}`,
+        label: intermediateSymbol,
+        x: tokenX,
+        y,
+        width: 48,
+        height: nodeHeight,
+        kind: 'token',
+      };
+      nodes.push(tokenNode);
+      edges.push({
+        id: `pool-to-token-${index}`,
+        from: poolNode,
+        to: tokenNode,
+        label: edgePct,
+      });
+      edges.push({
+        id: `token-to-destination-${index}`,
+        from: tokenNode,
+        to: destination,
+        label: edgePct,
+      });
+    } else {
+      edges.push({
+        id: `pool-to-destination-${index}`,
+        from: poolNode,
+        to: destination,
+        label: edgePct,
+      });
     }
-    return acc;
-  }, {});
-
-  const edges = snapshot.route.fills.flatMap((fill, index) => {
-    const pool = pools[index];
-    if (!pool) return [];
-    const label = `${(Number(fill.proportionBps) / 100).toFixed(2)}%`;
-    const mid = mids[index];
-    return mid
-      ? [
-          { id: `${pool.id}-in`, from: source, to: pool, label },
-          { id: `${pool.id}-mid`, from: pool, to: mid, label },
-          { id: `${pool.id}-out`, from: mid, to: destination, label },
-        ]
-      : [
-          { id: `${pool.id}-in`, from: source, to: pool, label },
-          { id: `${pool.id}-out`, from: pool, to: destination, label },
-        ];
   });
 
-  return { nodes: [source, ...pools, ...Object.values(mids), destination], edges };
+  return { viewWidth, viewHeight, nodeFontSize, nodes, edges };
 }
 
-function createNode(
-  id: string,
-  label: string,
-  x: number,
-  y: number,
-  type: Node['type'],
-  width: number,
-  height: number,
-  subtitle?: string,
-): Node {
-  return { id, label, x, y, width, height, type, subtitle };
+function cubicBezierPoint(
+  t: number,
+  p0: { x: number; y: number },
+  p1: { x: number; y: number },
+  p2: { x: number; y: number },
+  p3: { x: number; y: number },
+): { x: number; y: number } {
+  const u = 1 - t;
+  const x =
+    u ** 3 * p0.x +
+    3 * u ** 2 * t * p1.x +
+    3 * u * t ** 2 * p2.x +
+    t ** 3 * p3.x;
+  const y =
+    u ** 3 * p0.y +
+    3 * u ** 2 * t * p1.y +
+    3 * u * t ** 2 * p2.y +
+    t ** 3 * p3.y;
+  return { x, y };
+}
+
+function truncate(value: string, maxChars: number): string {
+  if (value.length <= maxChars) {
+    return value;
+  }
+  return `${value.slice(0, Math.max(1, maxChars - 1))}…`;
 }

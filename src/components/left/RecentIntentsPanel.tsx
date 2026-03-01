@@ -12,7 +12,11 @@ export function RecentIntentsPanel() {
   const setIntentInput = useAppStore((state) => state.setIntentInput);
 
   return (
-    <LeftPanelSection title="RECENT INTENTS">
+    <LeftPanelSection
+      title="RECENT INTENTS"
+      containerProps={{ h: '100%' }}
+      contentProps={{ overflowY: 'auto' }}
+    >
       <Flex direction="column" gap={0.5}>
         {intents.length === 0 ? (
           <Text

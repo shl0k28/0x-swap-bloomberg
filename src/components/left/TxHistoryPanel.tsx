@@ -16,7 +16,11 @@ export function TxHistoryPanel() {
   const transactions = useHistoryStore((state) => state.transactions);
 
   return (
-    <LeftPanelSection title="TX HISTORY">
+    <LeftPanelSection
+      title="TX HISTORY"
+      containerProps={{ h: '100%' }}
+      contentProps={{ overflowY: 'auto' }}
+    >
       <Flex direction="column" gap={1}>
         {transactions.length === 0 ? (
           <Text

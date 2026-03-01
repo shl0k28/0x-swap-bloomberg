@@ -39,8 +39,8 @@ export function IntentTab() {
   } as const;
 
   return (
-    <Flex direction="column" p={3} gap={3} h="100%" overflowY="auto">
-      <Box position="relative">
+    <Flex direction="column" p={3} gap={3} h="100%" overflowY="auto" alignItems="flex-start">
+      <Box position="relative" w="full" maxW="640px">
         <Textarea
           value={intentInput}
           onChange={(event) => setIntentInput(event.target.value)}
@@ -84,6 +84,8 @@ export function IntentTab() {
 
       <Button
         h="44px"
+        w="full"
+        maxW="480px"
         bg="amber"
         color="bgVoid"
         borderRadius="2px"
@@ -96,7 +98,9 @@ export function IntentTab() {
         RUN INTENT
       </Button>
 
-      {step ? <IntentPipeline currentStep={step} previews={previews} /> : null}
+      <Box w="full" maxW="640px">
+        {step ? <IntentPipeline currentStep={step} previews={previews} /> : null}
+      </Box>
       <ParsedIntentViewer intent={intent} />
       <IntentQuoteSummary quote={quote} />
 

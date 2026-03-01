@@ -20,7 +20,7 @@ export function QuotesComparePanel({
   onRunCompare: () => Promise<void>;
 }) {
   return (
-    <Box bg="bgSurface" border="1px solid" borderColor="border" p={2}>
+    <Box bg="bgSurface" border="1px solid" borderColor="border" p={2} maxW="480px" w="full">
       <Text
         fontFamily="mono"
         fontSize="9px"

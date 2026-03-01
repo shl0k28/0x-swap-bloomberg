@@ -32,19 +32,21 @@ export function QuotesTab() {
   } = useQuotesTabController();
 
   return (
-    <Flex direction="column" p={3} gap={3} h="100%" overflowY="auto">
-      <HStack spacing={2} align="center">
+    <Flex direction="column" p={3} gap={3} h="100%" overflowY="auto" alignItems="flex-start">
+      <HStack spacing={2} align="center" w="full" maxW="640px" flexWrap="wrap">
         <TokenSelector
           chainId={chainId}
           value={draft.sellToken}
           onChange={(sellToken) => updateDraft({ sellToken })}
           walletAddress={address}
+          triggerButtonProps={{ flex: 1, maxW: '220px' }}
         />
         <TokenSelector
           chainId={chainId}
           value={draft.buyToken}
           onChange={(buyToken) => updateDraft({ buyToken })}
           walletAddress={address}
+          triggerButtonProps={{ flex: 1, maxW: '220px' }}
         />
         <Input
           h="36px"
@@ -56,7 +58,7 @@ export function QuotesTab() {
           borderRadius="2px"
           fontFamily="mono"
           fontSize="12px"
-          w={{ base: '90px', md: '120px' }}
+          w={{ base: '120px', md: '140px' }}
         />
         <Button
           h="36px"

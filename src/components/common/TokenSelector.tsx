@@ -11,11 +11,12 @@ import {
   PopoverTrigger,
   Text,
   useDisclosure,
+  type ButtonProps,
 } from '@chakra-ui/react';
 import { useMemo, useState } from 'react';
 import type { Address } from 'viem';
 import { getTokensForChain } from '@/constants/tokens';
-import { TokenAvatar } from '@/components/common/TokenAvatar';
+import { TokenLogo } from '@/components/TokenLogo';
 import { useTokenBalanceMap } from '@/hooks/useTokenBalanceMap';
 
 /**
@@ -26,11 +27,13 @@ export function TokenSelector({
   value,
   onChange,
   walletAddress,
+  triggerButtonProps,
 }: {
   chainId: number;
   value: string;
   onChange: (symbol: string) => void;
   walletAddress?: Address;
+  triggerButtonProps?: ButtonProps;
 }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [search, setSearch] = useState('');
@@ -55,7 +58,7 @@ export function TokenSelector({
       <PopoverTrigger>
         <Button
           h="36px"
-          minW={{ base: '140px', md: '180px' }}
+          minW={{ base: '136px', md: '160px' }}
           px={3}
           bg="bgSurface"
           border="1px solid"
@@ -67,8 +70,13 @@ export function TokenSelector({
           justifyContent="flex-start"
           _hover={{ bg: 'bgRaised', borderColor: 'amber' }}
           _active={{ bg: 'bgRaised' }}
+          {...triggerButtonProps}
         >
-          <TokenAvatar symbol={selected?.symbol ?? '??'} logoUri={selected?.logoUri} size="sm" />
+          <TokenLogo
+            address={selected?.address ?? value}
+            chainId={chainId}
+            symbol={selected?.symbol ?? value}
+          />
           <Text ml={2} color="textPrimary">
             {selected?.symbol ?? value}
           </Text>
@@ -119,7 +127,7 @@ export function TokenSelector({
                 }}
               >
                 <Flex align="center" gap={2}>
-                  <TokenAvatar symbol={token.symbol} logoUri={token.logoUri} size="xs" />
+                  <TokenLogo address={token.address} chainId={chainId} symbol={token.symbol} size={16} />
                   <Box>
                     <Text fontSize="12px" fontFamily="mono" color="textPrimary">
                       {token.symbol}
