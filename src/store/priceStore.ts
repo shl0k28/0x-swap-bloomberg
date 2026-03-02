@@ -26,6 +26,7 @@ export const usePriceStore = create<PriceStore>((set) => ({
     BTC: undefined,
     SOL: undefined,
     USDT: undefined,
+    POL: undefined,
   },
   connectionStatus: 'idle',
   setPrice: (symbol, entry) =>

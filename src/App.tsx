@@ -1,15 +1,18 @@
 import { Box, Center, Text } from '@chakra-ui/react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { TerminalShell } from '@/layout/TerminalShell';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { usePythPrices } from '@/hooks/usePythPrices';
 import { useStatusPolling } from '@/hooks/useStatusPolling';
 import { loadBrowserRuntimeConfig } from '@/config/browserRuntime';
+import { fetchTokenList } from '@/services/tokenListService';
+import { useAppStore } from '@/stores/appStore';
 
 /**
  * Root app component for the Bloomberg-style trading terminal.
  */
 export default function App() {
+  const chainId = useAppStore((state) => state.selectedChainId);
   useKeyboardShortcuts();
   const runtimeError = useMemo(() => {
     try {
@@ -20,7 +23,15 @@ export default function App() {
     }
   }, []);
   useStatusPolling(runtimeError === null);
-  usePythPrices(runtimeError === null);
+  usePythPrices(runtimeError === null, chainId);
+
+  useEffect(() => {
+    if (runtimeError !== null) {
+      return;
+    }
+
+    void fetchTokenList().catch(() => undefined);
+  }, [runtimeError]);
 
   if (runtimeError) {
     return (

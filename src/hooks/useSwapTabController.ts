@@ -48,6 +48,18 @@ export function useSwapTabController() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchIndicativeQuote = useCallback(async () => {
+    const parsedAmount = Number(draft.amount);
+    if (
+      !draft.sellToken.trim() ||
+      !draft.buyToken.trim() ||
+      !Number.isFinite(parsedAmount) ||
+      parsedAmount <= 0
+    ) {
+      setQuote(null);
+      setError(null);
+      return;
+    }
+
     setInFlight(true);
     setIsQuoting(true);
     try {
@@ -75,6 +87,7 @@ export function useSwapTabController() {
       });
       setError(null);
     } catch (requestError) {
+      setQuote(null);
       setError(requestError instanceof Error ? requestError.message : 'Quote failed');
     } finally {
       setInFlight(false);
@@ -95,7 +108,7 @@ export function useSwapTabController() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       void fetchIndicativeQuote();
-    }, 550);
+    }, 500);
 
     return () => window.clearTimeout(timer);
   }, [fetchIndicativeQuote]);
@@ -151,7 +164,7 @@ export function useSwapTabController() {
       const txId = addTransaction({
         hash: swapHash,
         type: 'SWAP',
-        pair: `${draft.sellToken}/${draft.buyToken}`,
+        pair: `${executable.resolvedSellToken.symbol}/${executable.resolvedBuyToken.symbol}`,
         amount: draft.amount,
         status: 'PENDING',
       });
@@ -180,6 +193,7 @@ export function useSwapTabController() {
     chainId,
     draft,
     address,
+    isConnected,
     balances,
     quote,
     error,

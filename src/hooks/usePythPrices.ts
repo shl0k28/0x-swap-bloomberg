@@ -15,6 +15,7 @@ let reconnectTimer: number | null = null;
 let retryCount = 0;
 let activeConsumers = 0;
 let manualDisconnect = false;
+let currentFeedIds: string[] = [];
 const flashTimers = new Map<PythSymbol, number>();
 
 const FEED_TO_SYMBOL = Object.entries(PYTH_PRICE_FEEDS).reduce<Record<string, PythSymbol>>(
@@ -28,21 +29,25 @@ const FEED_TO_SYMBOL = Object.entries(PYTH_PRICE_FEEDS).reduce<Record<string, Py
 /**
  * Singleton Pyth websocket driver for all price consumers.
  */
-export function usePythPrices(enabled = true) {
+export function usePythPrices(enabled = true, chainId?: number) {
   useEffect(() => {
     if (!enabled) {
       return undefined;
     }
 
     activeConsumers += 1;
+    const nextIds = getSubscriptionIds(chainId);
     if (typeof document !== 'undefined' && document.visibilityState !== 'hidden') {
-      ensureConnected();
+      ensureConnected(nextIds);
     }
 
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') {
         shutdownConnection();
+        return;
       }
+
+      ensureConnected(getSubscriptionIds(chainId));
     };
 
     document.addEventListener('visibilitychange', handleVisibility);
@@ -53,11 +58,21 @@ export function usePythPrices(enabled = true) {
         shutdownConnection();
       }
     };
-  }, [enabled]);
+  }, [enabled, chainId]);
 }
 
-function ensureConnected(): void {
-  if (socket || activeConsumers === 0) {
+function ensureConnected(feedIds: string[]): void {
+  currentFeedIds = feedIds;
+  if (activeConsumers === 0) {
+    return;
+  }
+
+  if (socket?.readyState === WebSocket.OPEN) {
+    sendSubscription(currentFeedIds);
+    return;
+  }
+
+  if (socket?.readyState === WebSocket.CONNECTING) {
     return;
   }
 
@@ -68,12 +83,7 @@ function ensureConnected(): void {
   socket.addEventListener('open', () => {
     retryCount = 0;
     usePriceStore.getState().setConnectionStatus('online');
-    socket?.send(
-      JSON.stringify({
-        type: 'subscribe',
-        ids: Object.values(PYTH_PRICE_FEEDS),
-      }),
-    );
+    sendSubscription(currentFeedIds);
   });
 
   socket.addEventListener('message', (event) => {
@@ -138,9 +148,37 @@ function ensureConnected(): void {
     const delayMs = Math.min(3_000 * 2 ** (retryCount - 1), 30_000);
     reconnectTimer = window.setTimeout(() => {
       reconnectTimer = null;
-      ensureConnected();
+      ensureConnected(currentFeedIds);
     }, delayMs);
   });
+}
+
+function sendSubscription(feedIds: string[]): void {
+  if (!socket || socket.readyState !== WebSocket.OPEN) {
+    return;
+  }
+
+  socket.send(
+    JSON.stringify({
+      type: 'subscribe',
+      ids: feedIds,
+    }),
+  );
+}
+
+function getSubscriptionIds(chainId?: number): string[] {
+  const ids: string[] = [
+    PYTH_PRICE_FEEDS.ETH,
+    PYTH_PRICE_FEEDS.BTC,
+    PYTH_PRICE_FEEDS.SOL,
+    PYTH_PRICE_FEEDS.USDT,
+  ];
+
+  if (chainId === 137) {
+    ids.push(PYTH_PRICE_FEEDS.POL);
+  }
+
+  return ids;
 }
 
 function shutdownConnection(): void {

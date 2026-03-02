@@ -24,6 +24,9 @@ export function TerminalShell() {
       className="terminal-grid-bg terminal-no-overflow-x"
       templateColumns={{ base: '1fr', md: '200px 1fr', lg: '260px 1fr' }}
       templateRows="44px 1fr 24px"
+      columnGap={0}
+      rowGap={0}
+      bg="bgVoid"
       overflow="hidden"
     >
       <GridItem colSpan={{ base: 1, md: 2 }} rowStart={1}>
@@ -35,6 +38,7 @@ export function TerminalShell() {
         colStart={1}
         borderRight={{ base: 'none', md: '1px solid' }}
         borderColor="border"
+        bg="bgBase"
         display={{ base: 'none', md: 'block' }}
         overflow="hidden"
       >

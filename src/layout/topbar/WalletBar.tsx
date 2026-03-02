@@ -1,6 +1,8 @@
 import { Box, Button, Flex, HStack, Text } from '@chakra-ui/react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useBalance, useEnsName } from 'wagmi';
+import { getNativeToken } from '@/constants/nativeTokens';
+import { useAppStore } from '@/stores/appStore';
 import { shortAddress } from '@/utils/address';
 
 /**
@@ -54,8 +56,11 @@ function ConnectedWalletBar({
   address: string;
   openAccountModal: () => void;
 }) {
+  const chainId = useAppStore((state) => state.selectedChainId);
   const { data: ensName } = useEnsName({ address: address as `0x${string}` });
-  const { data: balance } = useBalance({ address: address as `0x${string}` });
+  const { data: balance } = useBalance({ address: address as `0x${string}`, chainId });
+  const nativeSymbol = getNativeToken(chainId).symbol;
+  const formattedBalance = balance ? Number(balance.formatted).toFixed(4) : '--';
 
   return (
     <Button
@@ -73,7 +78,7 @@ function ConnectedWalletBar({
       <HStack spacing={2}>
         <Box w="6px" h="6px" borderRadius="50%" bg="green" />
         <Text>{ensName ?? shortAddress(address)}</Text>
-        <Text color="textSecondary">{balance ? `${Number(balance.formatted).toFixed(4)} ETH` : '--'}</Text>
+        <Text color="textSecondary">{`${formattedBalance} ${nativeSymbol}`}</Text>
       </HStack>
     </Button>
   );

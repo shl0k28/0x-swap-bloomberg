@@ -72,6 +72,7 @@ export interface ZeroExSwapResponse {
   allowanceTarget?: Address;
   blockNumber?: string;
   buyAmount: string;
+  buyAmountInEth?: string;
   buyToken: Address;
   chainId: number;
   fees?: Record<string, unknown>;
@@ -80,7 +81,9 @@ export interface ZeroExSwapResponse {
   minBuyAmount?: string;
   route: ZeroExRoute;
   sellAmount: string;
+  sellAmountBeforeFeeInEth?: string;
   sellToken: Address | 'ETH';
+  estimatedPriceImpact?: number | string;
   tokenMetadata?: Record<string, unknown>;
   totalNetworkFee?: string;
   transaction: ZeroExTransaction;

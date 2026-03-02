@@ -1,6 +1,7 @@
 import type { Address } from 'viem';
 import { isAddress } from 'viem';
 import { CHAIN_METADATA, isSupportedChainId, type SupportedChainId } from '@/constants/chains';
+import { findTokenInCache } from '@/services/tokenListService';
 
 /**
  * Native token sentinel used by 0x swap endpoints.
@@ -249,6 +250,17 @@ export function resolveToken(chainId: number, token: string): ResolvedToken {
       };
     }
 
+    const fromCache = findTokenInCache(chainId, normalized);
+    if (fromCache) {
+      return {
+        symbol: fromCache.symbol,
+        addressOrSymbol: fromCache.isNative ? NATIVE_TOKEN_SENTINEL : fromCache.address,
+        decimals: fromCache.decimals,
+        isNative: fromCache.isNative ?? false,
+        name: fromCache.name,
+      };
+    }
+
     return {
       symbol: `${normalized.slice(0, 6)}...${normalized.slice(-4)}`,
       addressOrSymbol: normalized,
@@ -262,16 +274,27 @@ export function resolveToken(chainId: number, token: string): ResolvedToken {
   const alias = upper === 'MATIC' ? 'POL' : upper;
   const known = TOKENS_BY_CHAIN[chainId].find((entry) => entry.symbol.toUpperCase() === alias);
 
-  if (!known) {
-    const chainName = CHAIN_METADATA[chainId].shortName;
-    throw new Error(`Token ${token} is not in the ${chainName} token registry`);
+  if (known) {
+    return {
+      symbol: known.symbol,
+      addressOrSymbol: known.address,
+      decimals: known.decimals,
+      isNative: known.isNative,
+      name: known.name,
+    };
   }
 
-  return {
-    symbol: known.symbol,
-    addressOrSymbol: known.address,
-    decimals: known.decimals,
-    isNative: known.isNative,
-    name: known.name,
-  };
+  const fromCache = findTokenInCache(chainId, alias);
+  if (fromCache) {
+    return {
+      symbol: fromCache.symbol,
+      addressOrSymbol: fromCache.isNative ? NATIVE_TOKEN_SENTINEL : fromCache.address,
+      decimals: fromCache.decimals,
+      isNative: fromCache.isNative ?? false,
+      name: fromCache.name,
+    };
+  }
+
+  const chainName = CHAIN_METADATA[chainId].shortName;
+  throw new Error(`Token ${token} is not in the ${chainName} token registry`);
 }

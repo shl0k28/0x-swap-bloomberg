@@ -1,6 +1,7 @@
 import { Button, Flex, HStack, Text } from '@chakra-ui/react';
 import { TokenLogo } from '@/components/TokenLogo';
 import { LeftPanelSection } from '@/components/left/LeftPanelSection';
+import { getNativeToken } from '@/constants/nativeTokens';
 import { PINNED_SYMBOLS, getTokensForChain } from '@/constants/tokens';
 import { useAppStore } from '@/stores/appStore';
 
@@ -11,11 +12,13 @@ export function TokenQuickSelectPanel() {
   const chainId = useAppStore((state) => state.selectedChainId);
   const applyQuickToken = useAppStore((state) => state.applyQuickToken);
   const tokens = getTokensForChain(chainId);
+  const nativeSymbol = getNativeToken(chainId).symbol;
+  const quickSymbols = [nativeSymbol, ...PINNED_SYMBOLS.filter((symbol) => symbol !== nativeSymbol)];
 
   return (
     <LeftPanelSection title="TOKEN QUICK-SELECT">
       <Flex wrap="wrap" gap={1.5}>
-        {PINNED_SYMBOLS.map((symbol) => {
+        {quickSymbols.map((symbol) => {
           const token = tokens.find((entry) => entry.symbol === symbol);
           const logoAddress = token?.address ?? symbol;
           return (
