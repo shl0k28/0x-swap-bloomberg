@@ -133,7 +133,7 @@ export const useAppStore = create<AppStoreState>()(
       setSuccessMessage: (message) => set({ successMessage: message }),
     }),
     {
-      name: 'matcha-ai-app-store-v1',
+      name: 'valence-app-store-v1',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         activeTab: state.activeTab,

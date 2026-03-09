@@ -65,7 +65,7 @@ export const useHistoryStore = create<HistoryStoreState>()(
       },
     }),
     {
-      name: 'matcha-ai-history-v1',
+      name: 'valence-history-v1',
       storage: createJSONStorage(() => localStorage),
     },
   ),

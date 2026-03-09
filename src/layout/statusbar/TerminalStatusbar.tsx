@@ -1,7 +1,8 @@
 import { Box, Flex, Text } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import { springConfig } from '@/animations';
-import { CHAIN_METADATA } from '@/constants/chains';
+import { CHAIN_LABEL } from '@/constants/alchemyChains';
+import { useChainStatus } from '@/hooks/useChainStatus';
 import { useAppStore } from '@/stores/appStore';
 import { useStatusStore } from '@/stores/statusStore';
 import { toTimeAgo } from '@/utils/time';
@@ -13,10 +14,15 @@ const MotionBox = motion(Box);
  */
 export function TerminalStatusbar() {
   const chainId = useAppStore((state) => state.selectedChainId);
-  const { blockNumber, gasGwei, apiOnline, apiLatencyMs, lastUpdatedAt, apiRequestInFlight } =
-    useStatusStore();
+  const { apiOnline, apiRequestInFlight } = useStatusStore();
+  const { blockNumber, gasPriceGwei, latencyMs, updatedAt } = useChainStatus(chainId);
 
-  const chainName = CHAIN_METADATA[chainId as keyof typeof CHAIN_METADATA]?.shortName ?? 'CHAIN';
+  const chainLabel = CHAIN_LABEL[chainId] ?? 'CHAIN';
+  const blockLabel = blockNumber === null ? '--' : blockNumber.toLocaleString('en-US');
+  const gasLabel = gasPriceGwei ?? '--';
+  const rpcLabel = latencyMs === null ? '--' : `${latencyMs}ms`;
+  const updatedLabel = updatedAt === null ? '--' : toTimeAgo(updatedAt);
+  const chainOnline = blockNumber !== null;
 
   return (
     <Flex
@@ -34,12 +40,12 @@ export function TerminalStatusbar() {
       whiteSpace="nowrap"
     >
       <Flex align="center" minW={0}>
-        <Box w="6px" h="6px" borderRadius="50%" bg={apiOnline ? 'green' : 'red'} mr={1.5} />
-        <Text>{chainName.toUpperCase()}</Text>
+        <Box w="6px" h="6px" borderRadius="50%" bg={chainOnline ? 'green' : 'red'} mr={1.5} />
+        <Text>{chainLabel}</Text>
         <Text mx={2}>│</Text>
-        <Text>Block #{blockNumber}</Text>
+        <Text>Block #{blockLabel}</Text>
         <Text mx={2}>│</Text>
-        <Text>Gas: {gasGwei} gwei</Text>
+        <Text>Gas: {gasLabel} gwei</Text>
       </Flex>
 
       <Flex align="center" minW={0} display={{ base: 'none', md: 'flex' }}>
@@ -61,9 +67,9 @@ export function TerminalStatusbar() {
         />
         <Text ml={1}>{apiOnline ? 'ONLINE' : 'OFFLINE'}</Text>
         <Text mx={2}>│</Text>
-        <Text>Latency: {apiLatencyMs}ms</Text>
+        <Text>RPC: {rpcLabel}</Text>
         <Text mx={2}>│</Text>
-        <Text>Updated: {toTimeAgo(lastUpdatedAt)}</Text>
+        <Text>Updated: {updatedLabel}</Text>
       </Flex>
     </Flex>
   );

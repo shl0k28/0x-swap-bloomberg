@@ -3,7 +3,7 @@ import { createPublicClient, createWalletClient, http, isAddress, type Address }
 import { privateKeyToAccount } from 'viem/accounts';
 import { getViemChain, isSupportedChainId } from '@/constants/chains';
 import { loadNodeRuntimeConfig } from '@/config/nodeRuntime';
-import { createMatchaAiServices } from '@/createServices';
+import { createValenceServices } from '@/createServices';
 
 /**
  * Shared constants + helpers for examples.
@@ -17,7 +17,7 @@ export function getServices() {
   const config = loadNodeRuntimeConfig();
   return {
     config,
-    services: createMatchaAiServices(config),
+    services: createValenceServices(config),
   };
 }
 

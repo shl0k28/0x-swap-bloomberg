@@ -19,7 +19,7 @@ export function TerminalTopbar() {
     >
       <Box minW={0}>
         <Text textStyle="heroTitle" fontSize="16px" whiteSpace="nowrap">
-          matcha-ai
+          valence
         </Text>
         <Text
           display={{ base: 'none', md: 'block' }}

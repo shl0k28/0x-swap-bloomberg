@@ -55,7 +55,7 @@ export function IntentTab() {
           px={3}
           py={2.5}
           minH="100px"
-          _focusVisible={{ borderColor: 'amber', boxShadow: 'none' }}
+          _focusVisible={{ borderColor: 'amberDim', boxShadow: 'none' }}
           placeholder=""
         />
         <AnimatePresence mode="wait">

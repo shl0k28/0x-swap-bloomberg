@@ -14,7 +14,7 @@ export function SlippageSelector({
 }) {
   return (
     <Flex align="center" gap={2} wrap="wrap">
-      <Text fontSize="10px" color="textSecondary" fontFamily="mono">
+      <Text fontSize="10px" color="textSecondary" fontFamily="mono" w="64px" flexShrink={0}>
         Slippage
       </Text>
       {presets.map((preset) => (
@@ -31,7 +31,11 @@ export function SlippageSelector({
           fontFamily="mono"
           fontSize="10px"
           onClick={() => onChange(preset)}
-          _hover={{ borderColor: 'amber', color: value === preset ? 'bgVoid' : 'amber' }}
+          _hover={{
+            borderColor: value === preset ? 'amber' : 'borderBright',
+            bg: value === preset ? 'amber' : 'bgRaised',
+            color: value === preset ? 'bgVoid' : 'textPrimary',
+          }}
         >
           {preset}%
         </Button>
@@ -47,7 +51,8 @@ export function SlippageSelector({
         borderColor="borderBright"
         color="textPrimary"
         _placeholder={{ color: 'textDim' }}
-        _focusVisible={{ borderColor: 'amber', boxShadow: 'none' }}
+        _hover={{ borderColor: 'borderBright' }}
+        _focusVisible={{ borderColor: 'amberDim', boxShadow: 'none' }}
         fontFamily="mono"
         fontSize="10px"
       />

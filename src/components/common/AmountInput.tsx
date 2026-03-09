@@ -30,7 +30,7 @@ export function AmountInput({
           fontFamily="mono"
           fontSize="16px"
           _placeholder={{ color: 'textDim' }}
-          _focusVisible={{ borderColor: 'amber', boxShadow: 'none' }}
+          _focusVisible={{ borderColor: 'amberDim', boxShadow: 'none' }}
         />
         {onMax ? (
           <Button

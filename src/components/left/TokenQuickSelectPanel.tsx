@@ -33,7 +33,7 @@ export function TokenQuickSelectPanel() {
               borderRadius="2px"
               fontFamily="mono"
               fontSize="10px"
-              _hover={{ borderColor: 'amber', color: 'amber' }}
+              _hover={{ borderColor: 'amberDim', color: 'amber' }}
               _active={{ bg: 'amberDim', color: 'amber', borderColor: 'amber' }}
               onClick={() => applyQuickToken(symbol)}
             >

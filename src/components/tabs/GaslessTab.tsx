@@ -7,6 +7,7 @@ import { TerminalErrorLine } from '@/components/common/TerminalErrorLine';
 import { TokenSelector } from '@/components/common/TokenSelector';
 import { GaslessFeeBreakdown } from '@/components/tabs/GaslessFeeBreakdown';
 import { useGaslessTabController } from '@/hooks/useGaslessTabController';
+import { useWalletTokenBalances } from '@/hooks/useWalletTokenBalances';
 import { usePriceStore } from '@/store/priceStore';
 
 const MotionButton = motion(Button);
@@ -30,6 +31,11 @@ export function GaslessTab() {
     execute,
     executionStateLabel,
   } = useGaslessTabController();
+  const {
+    balances: walletTokenBalances,
+    isLoading: walletBalancesLoading,
+    error: walletBalancesError,
+  } = useWalletTokenBalances(chainId, address);
   const ethPrice = usePriceStore((state) => state.prices.ETH?.price ?? 0);
   const parsedAmount = Number.parseFloat(draft.amount);
   const usdHint =
@@ -52,6 +58,10 @@ export function GaslessTab() {
           value={draft.sellToken}
           onChange={(sellToken) => updateDraft({ sellToken })}
           walletAddress={address}
+          filterByWalletBalance
+          tokenBalances={walletTokenBalances}
+          balancesLoading={walletBalancesLoading}
+          balancesError={walletBalancesError}
           triggerButtonProps={{ flex: 1, maxW: '220px' }}
         />
         <TokenSelector
@@ -59,6 +69,9 @@ export function GaslessTab() {
           value={draft.buyToken}
           onChange={(buyToken) => updateDraft({ buyToken })}
           walletAddress={address}
+          tokenBalances={walletTokenBalances}
+          balancesLoading={walletBalancesLoading}
+          balancesError={walletBalancesError}
           triggerButtonProps={{ flex: 1, maxW: '220px' }}
         />
         <EligibilityBadge eligible={eligible} />
@@ -79,7 +92,7 @@ export function GaslessTab() {
           borderRadius="2px"
           fontFamily="mono"
           fontSize="16px"
-          _focus={{ borderColor: 'amber', boxShadow: 'none' }}
+          _focus={{ borderColor: 'amberDim', boxShadow: 'none' }}
         />
         <Text ml={1} mt={1} fontFamily="mono" fontSize="10px" color="textDim">
           {usdHint}

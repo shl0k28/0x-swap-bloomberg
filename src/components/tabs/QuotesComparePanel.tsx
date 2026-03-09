@@ -46,7 +46,7 @@ export function QuotesComparePanel({
           color="textPrimary"
           placeholder="0.1, 1, 5, 10"
           _placeholder={{ color: 'textDim' }}
-          _focusVisible={{ borderColor: 'amber', boxShadow: 'none' }}
+          _focusVisible={{ borderColor: 'amberDim', boxShadow: 'none' }}
         />
         <Button
           h="32px"

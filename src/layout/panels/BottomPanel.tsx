@@ -9,7 +9,8 @@ import { toTimeAgo } from '@/utils/time';
 export function BottomPanel() {
   const snapshot = useAppStore((state) => state.quoteSnapshot);
   const outputLogs = useAppStore((state) => state.outputLogs);
-  const routeHeight = snapshot && snapshot.route.fills.length > 4 ? 150 : 120;
+  const fills = snapshot?.route?.fills ?? [];
+  const routeHeight = fills.length > 4 ? 150 : 120;
 
   return (
     <Flex h={`${routeHeight + 68}px`} direction="column" bg="bgBase">

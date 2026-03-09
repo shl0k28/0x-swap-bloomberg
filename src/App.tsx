@@ -5,7 +5,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { usePythPrices } from '@/hooks/usePythPrices';
 import { useStatusPolling } from '@/hooks/useStatusPolling';
 import { loadBrowserRuntimeConfig } from '@/config/browserRuntime';
-import { fetchTokenList } from '@/services/tokenListService';
+import { fetchTokenListForChain } from '@/services/tokenListService';
 import { useAppStore } from '@/stores/appStore';
 
 /**
@@ -30,8 +30,8 @@ export default function App() {
       return;
     }
 
-    void fetchTokenList().catch(() => undefined);
-  }, [runtimeError]);
+    void fetchTokenListForChain(chainId).catch(() => undefined);
+  }, [chainId, runtimeError]);
 
   if (runtimeError) {
     return (

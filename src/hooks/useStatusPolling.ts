@@ -1,6 +1,4 @@
 import { useEffect, useMemo } from 'react';
-import { formatUnits } from 'viem';
-import { usePublicClient } from 'wagmi';
 import { loadBrowserRuntimeConfig } from '@/config/browserRuntime';
 import { ZeroxService } from '@/services/zerox/zeroxService';
 import { useAppStore } from '@/stores/appStore';
@@ -20,8 +18,6 @@ export function useStatusPolling(enabled = true) {
       return null;
     }
   }, []);
-  const publicClient = usePublicClient({ chainId });
-  const setChainMetrics = useStatusStore((state) => state.setChainMetrics);
   const setApiStatus = useStatusStore((state) => state.setApiStatus);
 
   useEffect(() => {
@@ -33,22 +29,17 @@ export function useStatusPolling(enabled = true) {
     let disposed = false;
 
     const poll = async () => {
-      if (!publicClient || disposed) {
+      if (disposed) {
         return;
       }
 
       try {
-        const [blockNumber, gasPrice, apiPing] = await Promise.all([
-          publicClient.getBlockNumber(),
-          publicClient.getGasPrice(),
-          service.pingApi(chainId, taker),
-        ]);
+        const apiPing = await service.pingApi(chainId, taker);
 
         if (disposed) {
           return;
         }
 
-        setChainMetrics(blockNumber.toString(), Number(formatUnits(gasPrice, 9)).toFixed(1));
         setApiStatus(apiPing.online, apiPing.latencyMs);
       } catch {
         if (!disposed) {
@@ -66,5 +57,5 @@ export function useStatusPolling(enabled = true) {
       disposed = true;
       window.clearInterval(handle);
     };
-  }, [chainId, enabled, publicClient, service, setApiStatus, setChainMetrics, taker]);
+  }, [chainId, enabled, service, setApiStatus, taker]);
 }

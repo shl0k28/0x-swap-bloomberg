@@ -34,7 +34,8 @@ const MotionPath = motion.path;
  * SVG route visualizer with responsive path layout and dense-route compaction.
  */
 export function RouteVisualizer({ snapshot }: { snapshot: QuoteSnapshot | null }) {
-  const poolCount = snapshot?.route.fills.length ?? 0;
+  const fills = snapshot?.route?.fills ?? [];
+  const poolCount = fills.length;
   const denseLayout = poolCount > 4;
   const containerHeight = denseLayout ? 150 : 120;
 

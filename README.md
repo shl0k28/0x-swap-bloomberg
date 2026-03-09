@@ -1,10 +1,10 @@
-# matcha-ai
+# valence
 
-![matcha-ai terminal UI placeholder](./public/hero-preview.svg)
+![valence terminal UI placeholder](./public/hero-preview.svg)
 
 Institutional-grade AI trading terminal built on 0x Swap API v2 and 0x Gasless API.
 
-`matcha-ai` translates natural language like `swap 1 ETH for USDC on Base` into typed intents, fetches live 0x routes, and executes through wagmi + viem. The UI is a Bloomberg-inspired terminal with dense market context, route visualization, transaction lifecycle tracking, and command-driven workflows.
+`valence` translates natural language like `swap 1 ETH for USDC on Base` into typed intents, fetches live 0x routes, and executes through wagmi + viem. The UI is a Bloomberg-inspired terminal with dense market context, route visualization, transaction lifecycle tracking, and command-driven workflows.
 
 ## Highlights
 

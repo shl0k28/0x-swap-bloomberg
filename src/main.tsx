@@ -6,7 +6,7 @@ import '@/styles/fonts';
 import '@/styles/terminal.css';
 
 /**
- * Browser entrypoint for Matcha AI terminal.
+ * Browser entrypoint for Valence terminal.
  */
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>

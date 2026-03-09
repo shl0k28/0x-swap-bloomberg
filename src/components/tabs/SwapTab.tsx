@@ -1,4 +1,15 @@
-import { Box, Button, Flex, HStack, Input, InputGroup, InputRightElement, Skeleton, Text } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  Flex,
+  Grid,
+  HStack,
+  Input,
+  InputGroup,
+  InputRightElement,
+  Skeleton,
+  Text,
+} from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import { formatUnits, isAddress } from 'viem';
@@ -30,6 +41,9 @@ export function SwapTab() {
     quote,
     error,
     routeSummary,
+    walletTokenBalances,
+    walletBalancesLoading,
+    walletBalancesError,
     isQuoting,
     executionState,
     shouldBlockTrade,
@@ -83,171 +97,219 @@ export function SwapTab() {
   };
 
   return (
-    <Flex direction="column" p={3} gap={3} h="100%" overflowY="auto" alignItems="flex-start">
-      <HStack spacing={2} align="center" w="full" maxW="480px">
-        <TokenSelector
-          chainId={chainId}
-          value={draft.sellToken}
-          onChange={(sellToken) => updateDraft({ sellToken })}
-          walletAddress={address}
-          triggerButtonProps={{ flex: 1, maxW: '220px' }}
-        />
+    <Flex direction="column" p={3} h="100%" overflowY="auto" alignItems="flex-start">
+      <Box w="100%" maxW="480px">
+        <Grid templateColumns="1fr 32px 1fr" gap="8px" w="100%" alignItems="center">
+          <TokenSelector
+            chainId={chainId}
+            value={draft.sellToken}
+            onChange={(sellToken) => updateDraft({ sellToken })}
+            walletAddress={address}
+            filterByWalletBalance
+            tokenBalances={walletTokenBalances}
+            balancesLoading={walletBalancesLoading}
+            balancesError={walletBalancesError}
+            triggerButtonProps={{
+              h: '36px',
+              w: 'full',
+              maxW: 'unset',
+              minW: 0,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          />
 
-        <MotionButton
-          onClick={handleTranspose}
-          variant="unstyled"
-          w="32px"
-          h="32px"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          bg="bgRaised"
-          border="1px solid"
-          borderColor="borderBright"
-          borderRadius="2px"
-          fontSize="13px"
-          fontFamily="mono"
-          color="textDim"
-          _hover={{ color: 'amber', borderColor: 'amber' }}
-          flexShrink={0}
-          aria-label="Swap tokens"
-          animate={{ rotate: transposeCount * 180 }}
-          transition={springConfig.gentle}
-        >
-          {'<>'}
-        </MotionButton>
+          <MotionButton
+            onClick={handleTranspose}
+            variant="unstyled"
+            w="32px"
+            h="32px"
+            minW="32px"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            alignSelf="center"
+            p={0}
+            bg="bgRaised"
+            border="1px solid"
+            borderColor="borderBright"
+            borderRadius="2px"
+            fontSize="13px"
+            fontFamily="mono"
+            color="textDim"
+            _hover={{ color: 'amber', borderColor: 'amberDim' }}
+            _active={{ bg: 'bgRaised' }}
+            _focus={{ boxShadow: 'none' }}
+            aria-label="Swap tokens"
+            animate={{ rotate: transposeCount * 180 }}
+            transition={springConfig.gentle}
+          >
+            {'<>'}
+          </MotionButton>
 
-        <TokenSelector
-          chainId={chainId}
-          value={draft.buyToken}
-          onChange={(buyToken) => updateDraft({ buyToken })}
-          walletAddress={address}
-          triggerButtonProps={{ flex: 1, maxW: '220px' }}
-          rightElement={
-            isQuoting ? (
-              <Flex ml="auto" w="80px" justify="flex-end">
-                <Skeleton w="80px" h="16px" startColor="bgSurface" endColor="bgRaised" />
-              </Flex>
-            ) : (
-              <Text ml="auto" fontSize="10px" color={buyAmountColor} textAlign="right" noOfLines={1}>
-                {buyAmountLabel}
-              </Text>
-            )
-          }
-        />
-      </HStack>
+          <TokenSelector
+            chainId={chainId}
+            value={draft.buyToken}
+            onChange={(buyToken) => updateDraft({ buyToken })}
+            walletAddress={address}
+            tokenBalances={walletTokenBalances}
+            balancesLoading={walletBalancesLoading}
+            balancesError={walletBalancesError}
+            triggerButtonProps={{
+              h: '36px',
+              w: 'full',
+              maxW: 'unset',
+              minW: 0,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            rightElement={
+              isQuoting ? (
+                <Flex ml="auto" w="80px" justify="flex-end">
+                  <Skeleton w="80px" h="16px" startColor="bgSurface" endColor="bgRaised" />
+                </Flex>
+              ) : (
+                <Text
+                  ml="auto"
+                  fontSize="10px"
+                  color={buyAmountColor}
+                  textAlign="right"
+                  noOfLines={1}
+                  alignSelf="center"
+                >
+                  {buyAmountLabel}
+                </Text>
+              )
+            }
+          />
+        </Grid>
 
-      <Box w="full" maxW="480px">
-        <Text textAlign="right" fontFamily="mono" fontSize="10px" color="textDim" mb={0.5}>
-          {buyUsdHint}
-        </Text>
-        {pricingLine.text ? (
-          <Text textAlign="right" fontFamily="mono" fontSize="10px" color="textDim" mb={1}>
-            {pricingLine.text}{' '}
-            <Text as="span" color={priceImpactColor}>
-              ({pricingLine.priceImpactPct.toFixed(2)}%)
-            </Text>
+        <Grid templateColumns="1fr 32px 1fr" gap="8px" w="100%" mt="4px" alignItems="center">
+          <Text fontSize="10px" fontFamily="mono" color="textDim" textAlign="left">
+            {buyUsdHint}
           </Text>
-        ) : null}
-      </Box>
+          <Box />
+          <Text fontSize="10px" fontFamily="mono" color="textDim" textAlign="right" noOfLines={1}>
+            {pricingLine.text ? (
+              <>
+                {pricingLine.text}{' '}
+                <Text as="span" color={priceImpactColor}>
+                  ({pricingLine.priceImpactPct.toFixed(2)}%)
+                </Text>
+              </>
+            ) : (
+              '$--'
+            )}
+          </Text>
+        </Grid>
 
-      <Box w="full" maxW="480px">
-        <InputGroup size="lg">
+        <Box mt="12px">
+          <InputGroup size="lg">
+            <Input
+              h="44px"
+              bg="bgSurface"
+              border="1px solid"
+              borderColor="borderBright"
+              borderRadius="2px"
+              fontFamily="mono"
+              fontSize="16px"
+              color="textPrimary"
+              px={3}
+              value={draft.amount}
+              placeholder="0.0"
+              onChange={(event) => updateDraft({ amount: sanitizeDecimalInput(event.target.value) })}
+              _placeholder={{ color: 'textDim' }}
+            />
+            <InputRightElement h="44px" w="66px" pr={2}>
+              <Button
+                h="24px"
+                px={2}
+                bg="amberDim"
+                color="amber"
+                borderRadius="1px"
+                fontFamily="mono"
+                fontSize="9px"
+                textTransform="uppercase"
+                onClick={() => updateDraft({ amount: balances[draft.sellToken] ?? draft.amount })}
+              >
+                Max
+              </Button>
+            </InputRightElement>
+          </InputGroup>
+        </Box>
+
+        <Text mt="4px" fontFamily="mono" fontSize="10px" color="textDim">
+          {usdHint}
+        </Text>
+
+        <Box mt="12px">
+          <SlippageSelector value={draft.slippagePct} onChange={(slippagePct) => updateDraft({ slippagePct })} />
+        </Box>
+
+        <HStack spacing={2} mt="8px" w="100%" alignItems="center">
+          <Text fontSize="10px" color="textSecondary" fontFamily="mono" w="120px" flexShrink={0}>
+            Deadline (minutes)
+          </Text>
           <Input
-            h="44px"
+            h="36px"
+            w="80px"
+            value={draft.deadlineMinutes}
+            onChange={(event) => updateDraft({ deadlineMinutes: event.target.value })}
             bg="bgSurface"
             border="1px solid"
             borderColor="borderBright"
             borderRadius="2px"
+            fontSize="12px"
             fontFamily="mono"
-            fontSize="16px"
-            color="textPrimary"
-            px={3}
-            value={draft.amount}
-            placeholder="0.0"
-            onChange={(event) => updateDraft({ amount: sanitizeDecimalInput(event.target.value) })}
-            _placeholder={{ color: 'textDim' }}
           />
-          <InputRightElement h="44px" w="66px" pr={2}>
-            <Button
-              h="24px"
-              px={2}
-              bg="amberDim"
-              color="amber"
-              borderRadius="1px"
-              fontFamily="mono"
-              fontSize="9px"
-              textTransform="uppercase"
-              onClick={() => updateDraft({ amount: balances[draft.sellToken] ?? draft.amount })}
-            >
-              Max
-            </Button>
-          </InputRightElement>
-        </InputGroup>
-        <Text ml={1} mt={1} fontFamily="mono" fontSize="10px" color="textDim">
-          {usdHint}
-        </Text>
-      </Box>
+        </HStack>
 
-      <Box w="full" maxW="480px">
-        <SlippageSelector value={draft.slippagePct} onChange={(slippagePct) => updateDraft({ slippagePct })} />
-      </Box>
+        <Box mt="12px" minH="18px">
+          {isQuoting ? (
+            <BrailleSpinner label="loading route..." color="cyan" />
+          ) : (
+            <Text color="cyan" fontFamily="mono" fontSize="10px">
+              {routeSummary}
+            </Text>
+          )}
+        </Box>
 
-      <HStack spacing={2} w="full" maxW="480px">
-        <Text fontSize="10px" color="textSecondary" fontFamily="mono">
-          Deadline (minutes)
-        </Text>
-        <Input
-          h="36px"
-          w="80px"
-          value={draft.deadlineMinutes}
-          onChange={(event) => updateDraft({ deadlineMinutes: event.target.value })}
-          bg="bgSurface"
-          border="1px solid"
-          borderColor="borderBright"
-          borderRadius="2px"
-          fontSize="12px"
+        <Box mt="8px">
+          <PriceImpactBanner impactPct={quote?.priceImpactPct ?? 0} />
+        </Box>
+
+        {error ? (
+          <Box mt="8px">
+            <TerminalErrorLine message={error} />
+          </Box>
+        ) : null}
+
+        <MotionButton
+          mt="12px"
+          h="44px"
+          w="100%"
+          maxW="480px"
+          bg={executionState === 'SUCCESS' ? 'green' : executionState === 'ERROR' ? 'red' : 'amber'}
+          color="bgVoid"
           fontFamily="mono"
-        />
-      </HStack>
-
-      <Box minH="18px">
-        {isQuoting ? (
-          <BrailleSpinner label="loading route..." color="cyan" />
-        ) : (
-          <Text color="cyan" fontFamily="mono" fontSize="10px">
-            {routeSummary}
-          </Text>
-        )}
+          fontSize="11px"
+          textTransform="uppercase"
+          letterSpacing="0.1em"
+          borderRadius="2px"
+          onClick={() => void executeSwap()}
+          isDisabled={!quote || isQuoting || !isConnected || shouldBlockTrade}
+          variants={buttonStateVariants}
+          animate={executionState}
+          transition={springConfig.gentle}
+          _hover={{ bg: executionState === 'IDLE' ? 'amberDim' : undefined }}
+        >
+          {executionState === 'APPROVING' || executionState === 'SWAPPING' ? (
+            <BrailleSpinner label={stateLabel[executionState]} />
+          ) : (
+            stateLabel[executionState]
+          )}
+        </MotionButton>
       </Box>
-
-      <PriceImpactBanner impactPct={quote?.priceImpactPct ?? 0} />
-      {error ? <TerminalErrorLine message={error} /> : null}
-
-      <MotionButton
-        h="44px"
-        w="full"
-        maxW="480px"
-        bg={executionState === 'SUCCESS' ? 'green' : executionState === 'ERROR' ? 'red' : 'amber'}
-        color="bgVoid"
-        fontFamily="mono"
-        fontSize="11px"
-        textTransform="uppercase"
-        letterSpacing="0.1em"
-        borderRadius="2px"
-        onClick={() => void executeSwap()}
-        isDisabled={!quote || isQuoting || !isConnected || shouldBlockTrade}
-        variants={buttonStateVariants}
-        animate={executionState}
-        transition={springConfig.gentle}
-        _hover={{ bg: executionState === 'IDLE' ? 'amberDim' : undefined }}
-      >
-        {executionState === 'APPROVING' || executionState === 'SWAPPING' ? (
-          <BrailleSpinner label={stateLabel[executionState]} />
-        ) : (
-          stateLabel[executionState]
-        )}
-      </MotionButton>
     </Flex>
   );
 }

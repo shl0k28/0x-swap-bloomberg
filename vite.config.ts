@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
   const zeroExApiBaseUrl = env['ZEROX_API_BASE_URL'] ?? 'https://api.0x.org';
 
   const zeroExProxyPlugin: Plugin = {
-    name: 'matcha-ai-0x-proxy',
+    name: 'valence-0x-proxy',
     configureServer(server: ViteDevServer) {
       server.middlewares.use('/api/0x', (req, res) => {
         void (async () => {

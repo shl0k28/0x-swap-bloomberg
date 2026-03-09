@@ -69,38 +69,69 @@ export const terminalTheme = extendTheme({
         borderRadius: '2px',
         boxShadow: 'none',
         maxW: '480px',
+        _focus: {
+          boxShadow: 'none',
+          outline: 'none',
+        },
         _focusVisible: {
           boxShadow: 'none',
+          outline: 'none',
         },
       },
     },
     Input: {
-      baseStyle: {
-        field: {
+      variants: {
+        outline: {
+          field: {
+            fontFamily: 'mono',
+            fontFeatureSettings: '"ss08" 1',
+            maxW: '480px',
+            border: '1px solid',
+            borderColor: 'border',
+            _hover: {
+              borderColor: 'borderBright',
+            },
+            _focus: {
+              borderColor: 'amberDim',
+              boxShadow: 'none',
+            },
+            _focusVisible: {
+              borderColor: 'amberDim',
+              boxShadow: 'none',
+            },
+            _invalid: {
+              borderColor: 'red',
+              boxShadow: 'none',
+            },
+          },
+        },
+      },
+      defaultProps: {
+        variant: 'outline',
+      },
+    },
+    Textarea: {
+      variants: {
+        outline: {
           fontFamily: 'mono',
           fontFeatureSettings: '"ss08" 1',
-          maxW: '480px',
+          border: '1px solid',
+          borderColor: 'border',
+          _hover: {
+            borderColor: 'borderBright',
+          },
           _focus: {
-            borderColor: 'amber',
+            borderColor: 'amberDim',
             boxShadow: 'none',
           },
           _focusVisible: {
-            borderColor: 'amber',
+            borderColor: 'amberDim',
             boxShadow: 'none',
           },
         },
       },
       defaultProps: {
-        focusBorderColor: 'borderBright',
-      },
-    },
-    Textarea: {
-      baseStyle: {
-        fontFamily: 'mono',
-        fontFeatureSettings: '"ss08" 1',
-      },
-      defaultProps: {
-        focusBorderColor: 'borderBright',
+        variant: 'outline',
       },
     },
     Divider: {
@@ -146,8 +177,12 @@ export const terminalTheme = extendTheme({
         borderColor: 'border',
         scrollbarWidth: 'none',
       },
-      '*:focus, *:focus-visible': {
+      '*:focus, *:focus-visible, *:focus-within': {
         outline: 'none !important',
+        boxShadow: 'none !important',
+      },
+      'input:focus, input:focus-visible, textarea:focus, textarea:focus-visible': {
+        borderColor: 'amberDim !important',
         boxShadow: 'none !important',
       },
       '::-webkit-scrollbar': {

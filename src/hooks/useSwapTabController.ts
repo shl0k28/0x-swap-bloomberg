@@ -1,15 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { isAddress } from 'viem';
 import { useAccount, usePublicClient, useWalletClient } from 'wagmi';
 import { approveTokenUnlimited } from '@/actions/approval';
 import { executeSwapQuote } from '@/actions/execution';
+import { getNativeToken } from '@/constants/nativeTokens';
 import { useAppStore } from '@/stores/appStore';
 import { useHistoryStore } from '@/stores/historyStore';
 import { useStatusStore } from '@/stores/statusStore';
 import { useTakerAddress } from '@/hooks/useTakerAddress';
 import { useTokenBalanceMap } from '@/hooks/useTokenBalanceMap';
+import { useWalletTokenBalances } from '@/hooks/useWalletTokenBalances';
 import { useZeroxService } from '@/services/zerox/useZeroxService';
 import type { SwapQuoteEnvelope } from '@/services/zerox/types';
+import type { ZeroExRoute, ZeroExRouteFill } from '@/types/zeroex';
 
 const stateLabel = {
   IDLE: 'EXECUTE SWAP',
@@ -39,6 +42,12 @@ export function useSwapTabController() {
   const publicClient = usePublicClient({ chainId });
   const { data: walletClient } = useWalletClient();
   const balances = useTokenBalanceMap(chainId, address);
+  const {
+    balances: walletTokenBalances,
+    isLoading: walletBalancesLoading,
+    error: walletBalancesError,
+    refetch: refetchWalletBalances,
+  } = useWalletTokenBalances(chainId, address);
   const addTransaction = useHistoryStore((state) => state.addTransaction);
   const updateTxStatus = useHistoryStore((state) => state.updateTransactionStatus);
 
@@ -46,6 +55,29 @@ export function useSwapTabController() {
   const [executionState, setExecutionState] = useState<ExecutionState>('IDLE');
   const [isQuoting, setIsQuoting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const previousChainRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (previousChainRef.current === null) {
+      previousChainRef.current = chainId;
+      return;
+    }
+
+    if (previousChainRef.current === chainId) {
+      return;
+    }
+
+    previousChainRef.current = chainId;
+    const nativeSymbol = getNativeToken(chainId).symbol;
+    updateDraft({
+      sellToken: nativeSymbol,
+      buyToken: '',
+      amount: '',
+    });
+    setQuote(null);
+    setQuoteSnapshot(null);
+    setError(null);
+  }, [chainId, setQuoteSnapshot, updateDraft]);
 
   const fetchIndicativeQuote = useCallback(async () => {
     const parsedAmount = Number(draft.amount);
@@ -73,12 +105,13 @@ export function useSwapTabController() {
         executable: false,
       });
 
+      const normalizedRoute = normalizeRoute(nextQuote);
       setQuote(nextQuote);
       setQuoteSnapshot({
         id: crypto.randomUUID(),
         mode: 'swap',
         pairLabel: `${nextQuote.resolvedSellToken.symbol}/${nextQuote.resolvedBuyToken.symbol}`,
-        route: nextQuote.response.route,
+        route: normalizedRoute,
         buyAmount: nextQuote.response.buyAmount,
         sellAmount: nextQuote.response.sellAmount,
         buySymbol: nextQuote.resolvedBuyToken.symbol,
@@ -118,7 +151,16 @@ export function useSwapTabController() {
       return 'Best route via -';
     }
 
-    const sources = Array.from(new Set(quote.response.route.fills.map((fill) => fill.source)));
+    const fills = getRouteFills(quote);
+    if (fills.length === 0) {
+      return 'Best route via -';
+    }
+
+    const sources = Array.from(new Set(fills.map((fill) => fill.source)));
+    if (sources.length === 0) {
+      return 'Best route via -';
+    }
+
     return `Best route via ${sources.join(' -> ')}`;
   }, [quote]);
 
@@ -172,6 +214,7 @@ export function useSwapTabController() {
       await publicClient.waitForTransactionReceipt({ hash: swapHash });
       updateTxStatus(txId, 'CONFIRMED');
       setExecutionState('SUCCESS');
+      refetchWalletBalances();
       setSuccessMessage(`SWAP CONFIRMED: ${swapHash.slice(0, 10)}...`);
       pushOutputLog('success', `SWAP confirmed ${draft.sellToken} -> ${draft.buyToken}`);
       window.setTimeout(() => {
@@ -198,6 +241,9 @@ export function useSwapTabController() {
     quote,
     error,
     routeSummary,
+    walletTokenBalances,
+    walletBalancesLoading,
+    walletBalancesError,
     isQuoting,
     executionState,
     shouldBlockTrade,
@@ -205,4 +251,35 @@ export function useSwapTabController() {
     executeSwap,
     stateLabel,
   };
+}
+
+function normalizeRoute(quote: SwapQuoteEnvelope): ZeroExRoute {
+  const directRoute = quote.response?.route;
+  if (
+    directRoute &&
+    Array.isArray(directRoute.fills) &&
+    Array.isArray(directRoute.tokens)
+  ) {
+    return directRoute;
+  }
+
+  const fallbackFills = getRouteFills(quote);
+  return {
+    fills: fallbackFills,
+    tokens: [],
+  };
+}
+
+function getRouteFills(quote: SwapQuoteEnvelope): ZeroExRouteFill[] {
+  const nestedFills = quote.response?.route?.fills;
+  if (Array.isArray(nestedFills)) {
+    return nestedFills;
+  }
+
+  const fallbackFills = (quote.response as unknown as { fills?: ZeroExRouteFill[] })?.fills;
+  if (Array.isArray(fallbackFills)) {
+    return fallbackFills;
+  }
+
+  return [];
 }

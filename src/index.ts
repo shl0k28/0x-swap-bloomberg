@@ -1,5 +1,5 @@
-export { createMatchaAiServices } from '@/createServices';
-export type { MatchaAiServices } from '@/createServices';
+export { createValenceServices } from '@/createServices';
+export type { ValenceServices } from '@/createServices';
 
 export { createIntentParser } from '@/intents/createIntentParser';
 export type { IntentParser } from '@/intents/intentParser';

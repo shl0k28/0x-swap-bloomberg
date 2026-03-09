@@ -3,7 +3,7 @@
   <rect x="80" y="80" width="1120" height="560" rx="28" fill="#0F1722" stroke="#2A3B4E"/>
   <circle cx="220" cy="170" r="8" fill="#00D4A9"/>
   <circle cx="252" cy="170" r="8" fill="#FF8B5A"/>
-  <text x="110" y="178" fill="#D6E0EA" font-family="Manrope, sans-serif" font-size="24" font-weight="700">matcha-ai</text>
+  <text x="110" y="178" fill="#D6E0EA" font-family="Manrope, sans-serif" font-size="24" font-weight="700">valence</text>
   <rect x="110" y="215" width="1060" height="62" rx="14" fill="#0B1320" stroke="#314357"/>
   <text x="130" y="253" fill="#97AABC" font-family="JetBrains Mono, monospace" font-size="24">swap 1 ETH for USDC on Base with 0.5% slippage</text>
   <rect x="1008" y="228" width="138" height="38" rx="10" fill="#00B585"/>

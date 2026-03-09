@@ -34,7 +34,7 @@ function isValidWalletConnectProjectId(value: string): boolean {
  */
 export const wagmiConfig = isValidWalletConnectProjectId(walletConnectProjectId)
   ? getDefaultConfig({
-      appName: 'matcha-ai',
+      appName: 'valence',
       projectId: walletConnectProjectId,
       chains: terminalChains,
       transports,

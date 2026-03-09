@@ -60,7 +60,10 @@ function ConnectedWalletBar({
   const { data: ensName } = useEnsName({ address: address as `0x${string}` });
   const { data: balance } = useBalance({ address: address as `0x${string}`, chainId });
   const nativeSymbol = getNativeToken(chainId).symbol;
-  const formattedBalance = balance ? Number(balance.formatted).toFixed(4) : '--';
+  const formattedBalance =
+    balance && typeof balance.formatted === 'string'
+      ? Number(balance.formatted).toFixed(4)
+      : '--';
 
   return (
     <Button

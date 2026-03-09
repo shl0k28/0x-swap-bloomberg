@@ -2,7 +2,7 @@ import { arbitrum, base, mainnet, optimism, polygon } from 'viem/chains';
 import type { Chain } from 'viem/chains';
 
 /**
- * Supported chain IDs for matcha-ai.
+ * Supported chain IDs for valence.
  */
 export const SUPPORTED_CHAIN_IDS = [1, 8453, 42161, 10, 137] as const;
 

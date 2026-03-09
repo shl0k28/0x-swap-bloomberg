@@ -1,59 +1,68 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getTokensForChain as getCuratedTokens } from '@/constants/tokens';
-import type { TokenInfo, TokenListCache } from '@/services/tokenListService';
-import { fetchTokenList, getCachedTokenList, getTokensForChain } from '@/services/tokenListService';
+import type { TokenInfo } from '@/services/tokenListService';
+import { fetchTokenListForChain, getCachedTokenListForChain } from '@/services/tokenListService';
+import { logger } from '@/utils/logger';
 
 interface UseTokenListResult {
   tokens: TokenInfo[];
   isLoading: boolean;
   search: (query: string) => TokenInfo[];
-  cache: TokenListCache | null;
 }
 
+const MIN_EXPECTED_BY_CHAIN: Record<number, number> = {
+  1: 500,
+  137: 100,
+  10: 80,
+  42161: 100,
+  8453: 80,
+};
+
 /**
- * Loads and filters token lists for the active chain with cached startup fallback.
+ * Loads a chain-specific token list and refetches when chain changes.
  */
 export function useTokenList(chainId: number): UseTokenListResult {
-  const [cache, setCache] = useState<TokenListCache | null>(() => getCachedTokenList());
-  const [isLoading, setIsLoading] = useState(() => cache === null);
+  const [tokens, setTokens] = useState<TokenInfo[]>(() => getCachedTokenListForChain(chainId) ?? []);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let disposed = false;
 
-    void fetchTokenList()
-      .then((nextCache) => {
+    setTokens([]);
+    setIsLoading(true);
+
+    void fetchTokenListForChain(chainId)
+      .then((nextTokens) => {
         if (disposed) {
           return;
         }
-        setCache(nextCache);
+
+        setTokens(nextTokens);
         setIsLoading(false);
+        warnForSparseList(chainId, nextTokens.length);
       })
       .catch(() => {
         if (disposed) {
           return;
         }
+
+        const fallback = getCuratedTokens(chainId).map((token) => ({
+          chainId,
+          address: token.address,
+          symbol: token.symbol,
+          name: token.name,
+          decimals: token.decimals,
+          isNative: token.isNative,
+        }));
+
+        setTokens(fallback);
         setIsLoading(false);
       });
 
     return () => {
       disposed = true;
     };
-  }, []);
-
-  const tokens = useMemo(() => {
-    if (!cache) {
-      return getCuratedTokens(chainId).map((token) => ({
-        chainId,
-        address: token.address,
-        symbol: token.symbol,
-        name: token.name,
-        decimals: token.decimals,
-        isNative: token.isNative,
-      }));
-    }
-
-    return getTokensForChain(cache, chainId);
-  }, [cache, chainId]);
+  }, [chainId]);
 
   const search = useCallback(
     (query: string): TokenInfo[] => {
@@ -82,6 +91,26 @@ export function useTokenList(chainId: number): UseTokenListResult {
     tokens,
     isLoading,
     search,
-    cache,
   };
+}
+
+function warnForSparseList(chainId: number, count: number): void {
+  if (!import.meta.env.DEV) {
+    return;
+  }
+
+  const threshold = MIN_EXPECTED_BY_CHAIN[chainId];
+  if (!threshold) {
+    return;
+  }
+
+  if (count >= threshold) {
+    return;
+  }
+
+  logger.warn('token_list_sparse_for_chain', {
+    chainId,
+    count,
+    threshold,
+  });
 }

@@ -4,6 +4,7 @@ import { TokenSelector } from '@/components/common/TokenSelector';
 import { TerminalErrorLine } from '@/components/common/TerminalErrorLine';
 import { QuotesComparePanel } from '@/components/tabs/QuotesComparePanel';
 import { QuotesSummaryCard } from '@/components/tabs/QuotesSummaryCard';
+import { useWalletTokenBalances } from '@/hooks/useWalletTokenBalances';
 import { useQuotesTabController } from '@/hooks/useQuotesTabController';
 import { useAppStore } from '@/stores/appStore';
 
@@ -13,6 +14,11 @@ import { useAppStore } from '@/stores/appStore';
 export function QuotesTab() {
   const chainId = useAppStore((state) => state.selectedChainId);
   const { address } = useAccount();
+  const {
+    balances: walletTokenBalances,
+    isLoading: walletBalancesLoading,
+    error: walletBalancesError,
+  } = useWalletTokenBalances(chainId, address);
   const {
     draft,
     quote,
@@ -39,6 +45,10 @@ export function QuotesTab() {
           value={draft.sellToken}
           onChange={(sellToken) => updateDraft({ sellToken })}
           walletAddress={address}
+          filterByWalletBalance
+          tokenBalances={walletTokenBalances}
+          balancesLoading={walletBalancesLoading}
+          balancesError={walletBalancesError}
           triggerButtonProps={{ flex: 1, maxW: '220px' }}
         />
         <TokenSelector
@@ -46,6 +56,9 @@ export function QuotesTab() {
           value={draft.buyToken}
           onChange={(buyToken) => updateDraft({ buyToken })}
           walletAddress={address}
+          tokenBalances={walletTokenBalances}
+          balancesLoading={walletBalancesLoading}
+          balancesError={walletBalancesError}
           triggerButtonProps={{ flex: 1, maxW: '220px' }}
         />
         <Input

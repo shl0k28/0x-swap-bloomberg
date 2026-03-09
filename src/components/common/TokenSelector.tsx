@@ -9,11 +9,18 @@ import {
   useOutsideClick,
   type ButtonProps,
 } from '@chakra-ui/react';
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 import { FixedSizeList, type ListChildComponentProps } from 'react-window';
-import { isAddress, type Address } from 'viem';
+import { formatUnits, isAddress, type Address } from 'viem';
 import { TokenLogo } from '@/components/TokenLogo';
-import { useTokenBalanceMap } from '@/hooks/useTokenBalanceMap';
+import type { TokenBalance } from '@/hooks/useWalletTokenBalances';
 import { useTokenList } from '@/hooks/useTokenList';
 import type { TokenInfo } from '@/services/tokenListService';
 
@@ -27,18 +34,22 @@ interface TokenSelectorProps {
   walletAddress?: Address;
   triggerButtonProps?: ButtonProps;
   rightElement?: ReactNode;
+  filterByWalletBalance?: boolean;
+  tokenBalances?: Record<string, TokenBalance>;
+  balancesLoading?: boolean;
+  balancesError?: string | null;
 }
 
 interface VirtualRowData {
   tokens: TokenInfo[];
   chainId: number;
   selectedValue: string;
-  balances: Record<string, string>;
+  balanceDisplayMap: Record<string, string>;
   onSelect: (token: TokenInfo) => void;
 }
 
 /**
- * Searchable token selector with virtualized large-list rendering.
+ * Searchable token selector with optional wallet-balance gating for sell side.
  */
 export function TokenSelector({
   chainId,
@@ -47,14 +58,17 @@ export function TokenSelector({
   walletAddress,
   triggerButtonProps,
   rightElement,
+  filterByWalletBalance = false,
+  tokenBalances,
+  balancesLoading = false,
+  balancesError = null,
 }: TokenSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const containerRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
-  const balances = useTokenBalanceMap(chainId, walletAddress);
-  const { tokens, isLoading, search } = useTokenList(chainId);
+  const { tokens, isLoading } = useTokenList(chainId);
 
   useOutsideClick({
     ref: containerRef,
@@ -83,16 +97,59 @@ export function TokenSelector({
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen]);
 
-  const selected = useMemo(() => findSelectedToken(tokens, value), [tokens, value]);
+  useEffect(() => {
+    setIsOpen(false);
+    setSearchQuery('');
+  }, [chainId]);
 
-  const filtered = useMemo(() => {
-    const matches = search(searchQuery);
-    if (searchQuery.trim().length > 0) {
-      return matches.slice(0, 50);
+  const selected = useMemo(() => findSelectedToken(tokens, value), [tokens, value]);
+  const normalizedBalances = useMemo(() => tokenBalances ?? {}, [tokenBalances]);
+  const hasWalletAddress = Boolean(walletAddress);
+  const shouldFilterByBalance = filterByWalletBalance && hasWalletAddress;
+
+  const balanceDisplayMap = useMemo(() => {
+    const next: Record<string, string> = {};
+    for (const token of tokens) {
+      next[getTokenBalanceKey(token)] = formatTokenBalance(token, normalizedBalances);
+    }
+    return next;
+  }, [normalizedBalances, tokens]);
+
+  const tokensWithBalance = useMemo(
+    () => tokens.filter((token) => hasTokenBalance(token, normalizedBalances)),
+    [normalizedBalances, tokens],
+  );
+
+  const showAllTokensFallback =
+    shouldFilterByBalance && !balancesLoading && !balancesError && tokensWithBalance.length === 0;
+
+  const sourceTokens = useMemo(() => {
+    if (!shouldFilterByBalance) {
+      return tokens;
     }
 
-    return matches;
-  }, [search, searchQuery]);
+    if (balancesLoading || showAllTokensFallback || balancesError) {
+      return tokens;
+    }
+
+    return tokensWithBalance;
+  }, [balancesError, balancesLoading, shouldFilterByBalance, showAllTokensFallback, tokens, tokensWithBalance]);
+
+  const filtered = useMemo(() => {
+    const normalized = searchQuery.trim().toLowerCase();
+    if (normalized.length === 0) {
+      return sourceTokens;
+    }
+
+    return sourceTokens
+      .filter((token) => {
+        const symbol = token.symbol.toLowerCase();
+        const name = token.name.toLowerCase();
+        const address = token.address.toLowerCase();
+        return symbol.includes(normalized) || name.includes(normalized) || address.startsWith(normalized);
+      })
+      .slice(0, 50);
+  }, [searchQuery, sourceTokens]);
 
   const virtualized = filtered.length > 200;
   const listHeight = Math.min(MAX_LIST_HEIGHT, Math.max(filtered.length * ROW_HEIGHT, ROW_HEIGHT));
@@ -107,13 +164,20 @@ export function TokenSelector({
     tokens: filtered,
     chainId,
     selectedValue: value,
-    balances,
+    balanceDisplayMap,
     onSelect: handleSelect,
   };
 
   const selectedLabel = selected?.symbol ?? value;
   const selectedAddress = selected?.address ?? value;
-  const selectedBalance = selected ? balances[selected.symbol] ?? '--' : '--';
+  const selectedBalance = selected ? balanceDisplayMap[getTokenBalanceKey(selected)] ?? '--' : '--';
+
+  const balanceStatusLabel = getBalanceStatusLabel({
+    enabled: shouldFilterByBalance,
+    loading: balancesLoading,
+    hasFallback: showAllTokensFallback,
+    hasError: Boolean(balancesError),
+  });
 
   return (
     <Box position="relative" ref={containerRef}>
@@ -123,15 +187,15 @@ export function TokenSelector({
         px={3}
         bg="bgSurface"
         border="1px solid"
-        borderColor="borderBright"
+        borderColor={isOpen ? 'amberDim' : 'borderBright'}
         borderRadius="2px"
         color="textPrimary"
         fontFamily="mono"
         fontSize="12px"
         justifyContent="flex-start"
         onClick={() => setIsOpen((open) => !open)}
-        _hover={{ bg: 'bgRaised', borderColor: 'amber' }}
-        _active={{ bg: 'bgRaised' }}
+        _hover={{ bg: 'bgRaised', borderColor: 'borderBright' }}
+        _active={{ bg: 'bgRaised', borderColor: isOpen ? 'amberDim' : 'borderBright' }}
         {...triggerButtonProps}
       >
         <TokenLogo address={selectedAddress} chainId={chainId} symbol={selectedLabel} />
@@ -172,9 +236,15 @@ export function TokenSelector({
             fontSize="12px"
             color="textPrimary"
             _placeholder={{ color: 'textDim' }}
-            _focus={{ borderColor: 'amber', boxShadow: 'none' }}
+            _focus={{ borderColor: 'amberDim', boxShadow: 'none' }}
             mb={2}
           />
+
+          {balanceStatusLabel ? (
+            <Text px={1} pb={2} fontFamily="mono" fontSize="9px" color="textDim" letterSpacing="0.08em">
+              {balanceStatusLabel}
+            </Text>
+          ) : null}
 
           <Box maxH={`${MAX_LIST_HEIGHT}px`} overflowY="auto">
             {isLoading ? (
@@ -204,7 +274,7 @@ export function TokenSelector({
                     key={`${token.chainId}:${token.address}`}
                     token={token}
                     chainId={chainId}
-                    balance={balances[token.symbol] ?? '--'}
+                    balance={balanceDisplayMap[getTokenBalanceKey(token)] ?? '--'}
                     isSelected={isTokenSelected(token, value)}
                     onClick={() => handleSelect(token)}
                   />
@@ -240,7 +310,7 @@ function VirtualizedTokenRow({
       <TokenRow
         token={token}
         chainId={data.chainId}
-        balance={data.balances[token.symbol] ?? '--'}
+        balance={data.balanceDisplayMap[getTokenBalanceKey(token)] ?? '--'}
         isSelected={isTokenSelected(token, data.selectedValue)}
         onClick={() => data.onSelect(token)}
       />
@@ -267,7 +337,7 @@ function TokenRow({
       align="center"
       px={3}
       border="1px solid"
-      borderColor={isSelected ? 'amber' : 'transparent'}
+      borderColor={isSelected ? 'amberDim' : 'transparent'}
       borderRadius="2px"
       cursor="pointer"
       _hover={{ bg: 'bgRaised' }}
@@ -328,4 +398,70 @@ function isTokenSelected(token: TokenInfo, value: string): boolean {
   }
 
   return token.symbol.toUpperCase() === trimmed.toUpperCase();
+}
+
+function getTokenBalanceKey(token: TokenInfo): string {
+  return token.isNative ? 'native' : token.address.toLowerCase();
+}
+
+function hasTokenBalance(token: TokenInfo, balances: Record<string, TokenBalance>): boolean {
+  const entry = balances[getTokenBalanceKey(token)];
+  return entry?.hasBalance === true;
+}
+
+function formatTokenBalance(token: TokenInfo, balances: Record<string, TokenBalance>): string {
+  const entry = balances[getTokenBalanceKey(token)];
+  if (!entry || !entry.hasBalance) {
+    return '--';
+  }
+
+  try {
+    const parsed = BigInt(entry.rawBalance);
+    const human = Number(formatUnits(parsed, token.decimals));
+    if (!Number.isFinite(human) || human <= 0) {
+      return '--';
+    }
+
+    if (human > 1_000) {
+      return human.toFixed(2);
+    }
+
+    if (human > 1) {
+      return human.toFixed(4).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+    }
+
+    return human.toPrecision(4);
+  } catch {
+    return '--';
+  }
+}
+
+function getBalanceStatusLabel({
+  enabled,
+  loading,
+  hasFallback,
+  hasError,
+}: {
+  enabled: boolean;
+  loading: boolean;
+  hasFallback: boolean;
+  hasError: boolean;
+}): string | null {
+  if (!enabled) {
+    return null;
+  }
+
+  if (loading) {
+    return 'LOADING BALANCES...';
+  }
+
+  if (hasError) {
+    return 'BALANCE LOOKUP UNAVAILABLE — SHOWING ALL TOKENS';
+  }
+
+  if (hasFallback) {
+    return 'NO BALANCES FOUND — SHOWING ALL TOKENS';
+  }
+
+  return null;
 }

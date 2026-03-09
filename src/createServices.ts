@@ -9,7 +9,7 @@ import { GaslessActionService } from '@/actions/gaslessAction';
 /**
  * Resolved service container used by app and scripts.
  */
-export interface MatchaAiServices {
+export interface ValenceServices {
   intentParser: ReturnType<typeof createIntentParser>;
   swapApi: ZeroExSwapApi;
   gaslessApi: ZeroExGaslessApi;
@@ -20,7 +20,7 @@ export interface MatchaAiServices {
 /**
  * Builds all protocol services from runtime configuration.
  */
-export function createMatchaAiServices(config: RuntimeConfig): MatchaAiServices {
+export function createValenceServices(config: RuntimeConfig): ValenceServices {
   const client = new ZeroExHttpClient({
     apiKey: config.zeroExApiKey,
     baseUrl: config.zeroExApiBaseUrl,

@@ -22,7 +22,7 @@
 | ERC-4337 smart account wrapper around swap calldata | advanced patterns reference | Same approach with 0x tx payload (`to/data/value`) inside UserOperation | Architecture is portable: replace Uniswap calldata source with 0x quote transaction object. |
 | L2 WETH unwrapping caveats | advanced patterns reference | Chain-specific post-trade unwrap checks still applicable | Keep post-trade asset reconciliation (WETH vs native) where route settles wrapped assets. |
 
-## Direct endpoint mapping used in `matcha-ai`
+## Direct endpoint mapping used in `valence`
 
 | Capability | Uniswap stack | 0x stack implemented |
 | --- | --- | --- |

@@ -90,6 +90,23 @@ const rainbowkitOverrides = css`
   }
 `;
 
+const globalFocusOverrides = css`
+  *:focus,
+  *:focus-visible,
+  *:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  input:focus,
+  input:focus-visible,
+  textarea:focus,
+  textarea:focus-visible {
+    border-color: var(--chakra-colors-amberDim) !important;
+    box-shadow: none !important;
+  }
+`;
+
 /**
  * Top-level provider stack for terminal UI.
  */
@@ -99,6 +116,7 @@ export function AppProviders({ children }: PropsWithChildren) {
       <QueryClientProvider client={queryClient}>
         <ChakraProvider theme={terminalTheme}>
           <Global styles={rainbowkitOverrides} />
+          <Global styles={globalFocusOverrides} />
           <RainbowKitProvider coolMode={false} theme={rainbowTheme}>
             {children}
           </RainbowKitProvider>

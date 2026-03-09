@@ -96,7 +96,7 @@ export function CommandPalette() {
             fontSize="10px"
             color="textPrimary"
             _placeholder={{ color: 'textDim' }}
-            _focusVisible={{ borderColor: 'amber', boxShadow: 'none' }}
+            _focusVisible={{ borderColor: 'amberDim', boxShadow: 'none' }}
             mb={2}
           />
           <List maxH="320px" overflowY="auto">

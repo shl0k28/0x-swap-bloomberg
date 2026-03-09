@@ -1,6 +1,7 @@
 import { Box } from '@chakra-ui/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { springConfig, tabPanelVariants } from '@/animations';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ModeTabs } from '@/components/tabs/ModeTabs';
 import { SwapTab } from '@/components/tabs/SwapTab';
 import { IntentTab } from '@/components/tabs/IntentTab';
@@ -30,10 +31,26 @@ export function MainPanel() {
             transition={springConfig.stiff}
             h="100%"
           >
-            {activeTab === 'swap' ? <SwapTab /> : null}
-            {activeTab === 'intent' ? <IntentTab /> : null}
-            {activeTab === 'quotes' ? <QuotesTab /> : null}
-            {activeTab === 'gasless' ? <GaslessTab /> : null}
+            {activeTab === 'swap' ? (
+              <ErrorBoundary>
+                <SwapTab />
+              </ErrorBoundary>
+            ) : null}
+            {activeTab === 'intent' ? (
+              <ErrorBoundary>
+                <IntentTab />
+              </ErrorBoundary>
+            ) : null}
+            {activeTab === 'quotes' ? (
+              <ErrorBoundary>
+                <QuotesTab />
+              </ErrorBoundary>
+            ) : null}
+            {activeTab === 'gasless' ? (
+              <ErrorBoundary>
+                <GaslessTab />
+              </ErrorBoundary>
+            ) : null}
           </MotionBox>
         </AnimatePresence>
       </Box>
