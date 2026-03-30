@@ -1,6 +1,4 @@
-# valence
-
-![valence terminal UI placeholder](./public/hero-preview.svg)
+# 0x-swap
 
 Institutional-grade AI trading terminal built on 0x Swap API v2 and 0x Gasless API.
 
