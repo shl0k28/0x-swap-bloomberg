@@ -19,7 +19,7 @@ export function TerminalTopbar() {
     >
       <Box minW={0}>
         <Text textStyle="heroTitle" fontSize="16px" whiteSpace="nowrap">
-          valence
+          0x-ai
         </Text>
         <Text
           display={{ base: 'none', md: 'block' }}
@@ -29,7 +29,7 @@ export function TerminalTopbar() {
           lineHeight="1"
           whiteSpace="nowrap"
         >
-          prompt to intent to 0x route to execution
+          swaps done right
         </Text>
       </Box>
 

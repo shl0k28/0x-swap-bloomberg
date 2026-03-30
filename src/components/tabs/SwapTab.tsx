@@ -34,6 +34,7 @@ const MotionButton = motion(Button);
 export function SwapTab() {
   const {
     chainId,
+    walletChainId,
     draft,
     address,
     isConnected,
@@ -297,7 +298,7 @@ export function SwapTab() {
           letterSpacing="0.1em"
           borderRadius="2px"
           onClick={() => void executeSwap()}
-          isDisabled={!quote || isQuoting || !isConnected || shouldBlockTrade}
+          isDisabled={!quote || isQuoting || !isConnected || walletChainId !== chainId || shouldBlockTrade}
           variants={buttonStateVariants}
           animate={executionState}
           transition={springConfig.gentle}

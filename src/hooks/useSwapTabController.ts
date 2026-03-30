@@ -3,6 +3,7 @@ import { isAddress } from 'viem';
 import { useAccount, usePublicClient, useWalletClient } from 'wagmi';
 import { approveTokenUnlimited } from '@/actions/approval';
 import { executeSwapQuote } from '@/actions/execution';
+import { CHAIN_METADATA, isSupportedChainId } from '@/constants/chains';
 import { getNativeToken } from '@/constants/nativeTokens';
 import { useAppStore } from '@/stores/appStore';
 import { useHistoryStore } from '@/stores/historyStore';
@@ -13,6 +14,7 @@ import { useWalletTokenBalances } from '@/hooks/useWalletTokenBalances';
 import { useZeroxService } from '@/services/zerox/useZeroxService';
 import type { SwapQuoteEnvelope } from '@/services/zerox/types';
 import type { ZeroExRoute, ZeroExRouteFill } from '@/types/zeroex';
+import { getErrorMessage } from '@/utils/errors';
 
 const stateLabel = {
   IDLE: 'EXECUTE SWAP',
@@ -38,9 +40,9 @@ export function useSwapTabController() {
   const setInFlight = useStatusStore((state) => state.setApiRequestInFlight);
   const taker = useTakerAddress();
   const service = useZeroxService();
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId: walletChainId } = useAccount();
   const publicClient = usePublicClient({ chainId });
-  const { data: walletClient } = useWalletClient();
+  const { data: walletClient } = useWalletClient({ chainId });
   const balances = useTokenBalanceMap(chainId, address);
   const {
     balances: walletTokenBalances,
@@ -121,7 +123,7 @@ export function useSwapTabController() {
       setError(null);
     } catch (requestError) {
       setQuote(null);
-      setError(requestError instanceof Error ? requestError.message : 'Quote failed');
+      setError(getErrorMessage(requestError));
     } finally {
       setInFlight(false);
       setIsQuoting(false);
@@ -167,8 +169,21 @@ export function useSwapTabController() {
   const shouldBlockTrade = (quote?.priceImpactPct ?? 0) > 15;
 
   const executeSwap = async () => {
-    if (!walletClient || !publicClient || !isConnected || !address) {
+    if (!isConnected || !address) {
       setError('Connect wallet before swapping.');
+      return;
+    }
+
+    if (walletChainId !== chainId) {
+      const chainLabel = isSupportedChainId(chainId)
+        ? CHAIN_METADATA[chainId].shortName
+        : `chain ${chainId}`;
+      setError(`Switch wallet network to ${chainLabel} before swapping.`);
+      return;
+    }
+
+    if (!walletClient || !publicClient) {
+      setError('Wallet signer unavailable on the selected network. Reconnect and try again.');
       return;
     }
 
@@ -223,7 +238,7 @@ export function useSwapTabController() {
       }, 2500);
     } catch (requestError) {
       setExecutionState('ERROR');
-      const message = requestError instanceof Error ? requestError.message : 'Swap execution failed';
+      const message = getErrorMessage(requestError);
       setError(message);
       pushOutputLog('error', `SWAP failed: ${message}`);
       window.setTimeout(() => setExecutionState('IDLE'), 2500);
@@ -237,6 +252,7 @@ export function useSwapTabController() {
     draft,
     address,
     isConnected,
+    walletChainId,
     balances,
     quote,
     error,

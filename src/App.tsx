@@ -1,9 +1,11 @@
 import { Box, Center, Text } from '@chakra-ui/react';
 import { useEffect, useMemo } from 'react';
+import { useAccount } from 'wagmi';
 import { TerminalShell } from '@/layout/TerminalShell';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { usePythPrices } from '@/hooks/usePythPrices';
 import { useStatusPolling } from '@/hooks/useStatusPolling';
+import { isSupportedChainId } from '@/constants/chains';
 import { loadBrowserRuntimeConfig } from '@/config/browserRuntime';
 import { fetchTokenListForChain } from '@/services/tokenListService';
 import { useAppStore } from '@/stores/appStore';
@@ -13,6 +15,8 @@ import { useAppStore } from '@/stores/appStore';
  */
 export default function App() {
   const chainId = useAppStore((state) => state.selectedChainId);
+  const setSelectedChainId = useAppStore((state) => state.setSelectedChainId);
+  const { chainId: walletChainId, isConnected } = useAccount();
   useKeyboardShortcuts();
   const runtimeError = useMemo(() => {
     try {
@@ -24,6 +28,16 @@ export default function App() {
   }, []);
   useStatusPolling(runtimeError === null);
   usePythPrices(runtimeError === null, chainId);
+
+  useEffect(() => {
+    if (!isConnected || !walletChainId || !isSupportedChainId(walletChainId)) {
+      return;
+    }
+
+    if (walletChainId !== chainId) {
+      setSelectedChainId(walletChainId);
+    }
+  }, [chainId, isConnected, setSelectedChainId, walletChainId]);
 
   useEffect(() => {
     if (runtimeError !== null) {

@@ -15,7 +15,7 @@ const MotionBox = motion(Box);
 export function TerminalStatusbar() {
   const chainId = useAppStore((state) => state.selectedChainId);
   const { apiOnline, apiRequestInFlight } = useStatusStore();
-  const { blockNumber, gasPriceGwei, latencyMs, updatedAt } = useChainStatus(chainId);
+  const { blockNumber, gasPriceGwei, gasDetails, latencyMs, updatedAt } = useChainStatus(chainId);
 
   const chainLabel = CHAIN_LABEL[chainId] ?? 'CHAIN';
   const blockLabel = blockNumber === null ? '--' : blockNumber.toLocaleString('en-US');
@@ -46,6 +46,12 @@ export function TerminalStatusbar() {
         <Text>Block #{blockLabel}</Text>
         <Text mx={2}>│</Text>
         <Text>Gas: {gasLabel} gwei</Text>
+        {gasDetails ? (
+          <>
+            <Text mx={2}>│</Text>
+            <Text display={{ base: 'none', lg: 'block' }}>{gasDetails}</Text>
+          </>
+        ) : null}
       </Flex>
 
       <Flex align="center" minW={0} display={{ base: 'none', md: 'flex' }}>

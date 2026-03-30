@@ -31,7 +31,7 @@ export function BottomPanel() {
       </Box>
 
       <Box
-        h="40px"
+        h="72px"
         borderTop="1px solid"
         borderColor="border"
         px={3}
@@ -58,6 +58,7 @@ export function BottomPanel() {
             key={line.id}
             fontSize="10px"
             fontFamily="mono"
+            lineHeight="1.4"
             color={
               line.level === 'success'
                 ? 'green'
@@ -65,6 +66,8 @@ export function BottomPanel() {
                   ? 'red'
                   : 'textSecondary'
             }
+            whiteSpace="pre-wrap"
+            wordBreak="break-word"
           >
             [{toTimeAgo(line.timestamp)}] {line.text}
           </Text>

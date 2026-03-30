@@ -1,6 +1,6 @@
 import { Button, Circle, HStack, Menu, MenuButton, MenuItem, MenuList, Text } from '@chakra-ui/react';
 import { ChevronDownIcon } from '@chakra-ui/icons';
-import { useSwitchChain } from 'wagmi';
+import { useAccount, useSwitchChain } from 'wagmi';
 import { CHAIN_METADATA, SUPPORTED_CHAIN_IDS, type SupportedChainId } from '@/constants/chains';
 import { useAppStore } from '@/stores/appStore';
 
@@ -11,6 +11,7 @@ export function ChainSelector() {
   const chainId = useAppStore((state) => state.selectedChainId);
   const setChainId = useAppStore((state) => state.setSelectedChainId);
   const { switchChainAsync } = useSwitchChain();
+  const { isConnected } = useAccount();
 
   const current = CHAIN_METADATA[chainId as SupportedChainId] ?? CHAIN_METADATA[8453];
 
@@ -49,8 +50,16 @@ export function ChainSelector() {
               borderRadius="2px"
               _hover={{ bg: 'bgSurface', color: 'textPrimary' }}
               onClick={() => {
-                setChainId(id);
-                void switchChainAsync({ chainId: id }).catch(() => undefined);
+                if (!isConnected) {
+                  setChainId(id);
+                  return;
+                }
+
+                void switchChainAsync({ chainId: id })
+                  .then(() => {
+                    setChainId(id);
+                  })
+                  .catch(() => undefined);
               }}
             >
               <HStack spacing={2}>

@@ -1,7 +1,7 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { createConfig, http } from 'wagmi';
 import { injected } from 'wagmi/connectors';
-import { arbitrum, base, mainnet, polygon } from 'wagmi/chains';
+import { arbitrum, base, mainnet, optimism, polygon } from 'wagmi/chains';
 
 /**
  * WalletConnect project id for RainbowKit connectors.
@@ -12,12 +12,13 @@ const walletConnectProjectId =
 /**
  * Supported chains in the terminal UI.
  */
-export const terminalChains = [mainnet, base, arbitrum, polygon] as const;
+export const terminalChains = [mainnet, base, arbitrum, optimism, polygon] as const;
 
 const transports = {
   [mainnet.id]: http(import.meta.env['VITE_RPC_URL_MAINNET'] as string | undefined),
   [base.id]: http(import.meta.env['VITE_RPC_URL_BASE'] as string | undefined),
   [arbitrum.id]: http(import.meta.env['VITE_RPC_URL_ARBITRUM'] as string | undefined),
+  [optimism.id]: http(import.meta.env['VITE_RPC_URL_OPTIMISM'] as string | undefined),
   [polygon.id]: http(import.meta.env['VITE_RPC_URL_POLYGON'] as string | undefined),
 } as const;
 

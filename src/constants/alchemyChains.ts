@@ -11,15 +11,32 @@ export const CHAIN_LABEL: Record<number, string> = {
 
 const alchemyApiKey = ((import.meta.env['VITE_ALCHEMY_API_KEY'] as string | undefined) ?? '').trim();
 
+const ALCHEMY_NETWORK_SEGMENT: Record<number, string> = {
+  1: 'eth-mainnet',
+  137: 'polygon-mainnet',
+  10: 'opt-mainnet',
+  42161: 'arb-mainnet',
+  8453: 'base-mainnet',
+};
+
+function buildAlchemyUrl(chainId: number, key: string): string | null {
+  const network = ALCHEMY_NETWORK_SEGMENT[chainId] ?? ALCHEMY_NETWORK_SEGMENT[1];
+  if (!network || key.length === 0) {
+    return null;
+  }
+
+  return `https://${network}.g.alchemy.com/v2/${key}`;
+}
+
 /**
  * Chain RPC endpoints routed through Alchemy.
  */
 export const ALCHEMY_RPC: Record<number, string> = {
-  1: `https://eth-mainnet.g.alchemy.com/v2/${alchemyApiKey}`,
-  137: `https://polygon-mainnet.g.alchemy.com/v2/${alchemyApiKey}`,
-  10: `https://opt-mainnet.g.alchemy.com/v2/${alchemyApiKey}`,
-  42161: `https://arb-mainnet.g.alchemy.com/v2/${alchemyApiKey}`,
-  8453: `https://base-mainnet.g.alchemy.com/v2/${alchemyApiKey}`,
+  1: buildAlchemyUrl(1, alchemyApiKey) ?? '',
+  137: buildAlchemyUrl(137, alchemyApiKey) ?? '',
+  10: buildAlchemyUrl(10, alchemyApiKey) ?? '',
+  42161: buildAlchemyUrl(42161, alchemyApiKey) ?? '',
+  8453: buildAlchemyUrl(8453, alchemyApiKey) ?? '',
 };
 
 /**
@@ -38,4 +55,11 @@ export function getAlchemyRpc(chainId: number): string | null {
   }
 
   return ALCHEMY_RPC[chainId] ?? ALCHEMY_RPC[1] ?? null;
+}
+
+/**
+ * Demo Alchemy endpoints for resilient read-only status fallback.
+ */
+export function getAlchemyDemoRpc(chainId: number): string {
+  return buildAlchemyUrl(chainId, 'demo') ?? 'https://eth-mainnet.g.alchemy.com/v2/demo';
 }
